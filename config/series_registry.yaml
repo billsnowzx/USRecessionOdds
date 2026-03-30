@@ -1,4 +1,5 @@
 DGS10:
+  name: 10-Year Treasury Constant Maturity Rate
   source: FRED
   frequency: daily
   aggregation: mean
@@ -8,6 +9,7 @@ DGS10:
   release_lag_days: 0
 
 DTB3:
+  name: 3-Month Treasury Bill Secondary Market Rate
   source: FRED
   frequency: daily
   aggregation: mean
@@ -17,6 +19,7 @@ DTB3:
   release_lag_days: 0
 
 UNRATE:
+  name: Civilian Unemployment Rate
   source: FRED
   vintage_source: ALFRED
   frequency: monthly
@@ -27,6 +30,7 @@ UNRATE:
   release_lag_days: 5
 
 BAMLH0A0HYM2:
+  name: ICE BofA US High Yield Index OAS
   source: FRED
   frequency: daily
   aggregation: mean

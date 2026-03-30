@@ -52,7 +52,9 @@ If you do not install the package, run with `PYTHONPATH=src` and `python -m rece
 ## Output artifacts
 
 - `data/raw/*.csv`: cached FRED downloads
+- `data/raw/*.metadata.json`: raw-cache metadata sidecars with source and checksum information
 - `data/processed/monthly_panel.csv` and `.parquet`
+- `data/processed/monthly_panel*.metadata.json`: processed panel metadata sidecars
 - `reports/tables/baseline_predictions.csv`
 - `reports/tables/baseline_metrics.csv`
 - `reports/tables/robustness_metrics.csv`
@@ -68,6 +70,8 @@ If you do not install the package, run with `PYTHONPATH=src` and `python -m rece
 - `outputs/backtests/*_event_scorecard.csv`
 - `outputs/backtests/*_episode_summary.csv`
 - `outputs/backtests/*_threshold_analysis.csv`
+
+The source registry is documented in `config/series_registry.yaml`, and the human-readable field descriptions live in `docs/data_dictionary.md`.
 
 ## Realtime mode
 

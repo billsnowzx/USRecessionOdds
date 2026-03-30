@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from recession_risk.data.registry import get_series_spec
+from recession_risk.data.registry import get_series_spec, list_series_ids
 from recession_risk.data.release_calendar import get_available_date
 from recession_risk.data.vintages import get_series_asof, load_vintage_frame
 from recession_risk.features.labels import build_recession_start_series, build_within_h_label
@@ -31,10 +31,11 @@ def build_realtime_monthly_panel(config: dict, aggregation: str | None = None) -
     aggregation_method = aggregation or config["aggregation"]["default"]
     raw_dir = config["paths"]["raw_data"]
     reference_dir = config["paths"]["reference_data"]
+    series_ids = list_series_ids(config)
 
     raw_series = {
         series_id: load_fred_csv(raw_dir / f"{series_id}.csv", series_id)
-        for series_id in config["series"]
+        for series_id in series_ids
     }
     series_caches = {
         series_id: prepare_series_cache(series_id, raw_frame, config, aggregation_method)
@@ -48,7 +49,7 @@ def build_realtime_monthly_panel(config: dict, aggregation: str | None = None) -
     for forecast_date in forecast_dates:
         row = {"date": forecast_date, "forecast_date": forecast_date, "aggregation_method": aggregation_method}
         per_series: dict[str, SeriesAvailability] = {}
-        for series_id in raw_series:
+        for series_id in series_ids:
             per_series[series_id] = series_latest_available_value(
                 series_id=series_id,
                 as_of_date=forecast_date,

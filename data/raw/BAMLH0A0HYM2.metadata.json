@@ -1,0 +1,15 @@
+{
+  "aggregation": "mean",
+  "checksum_sha256": "a04a75100d43352af8ba2a117d2ea64706e9f27f24586f2103bdf37e6398aa30",
+  "file_name": "BAMLH0A0HYM2.csv",
+  "frequency": "daily",
+  "metadata_written_at_utc": "2026-03-30T13:22:43+00:00",
+  "pull_timestamp_utc": "2026-03-30T13:22:43+00:00",
+  "realtime_eligible": true,
+  "series_id": "BAMLH0A0HYM2",
+  "source": "FRED",
+  "source_kind": "raw",
+  "source_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2",
+  "transform": "level",
+  "vintage_source": null
+}
