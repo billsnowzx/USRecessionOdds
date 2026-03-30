@@ -23,10 +23,14 @@ def test_expanded_models_run_and_emit_summaries():
         save_monthly_panel(panel, config)
         predictions, metrics, summaries = run_expanded_models(panel, config, data_mode="latest_available")
         predictions_path, metrics_path, summaries_path = save_expanded_outputs(predictions, metrics, summaries, config, "latest_available")
+        backtests_dir = config["paths"]["outputs"] / "backtests"
 
         assert predictions_path.exists()
         assert metrics_path.exists()
         assert summaries_path.exists()
+        assert (backtests_dir / "expanded_event_scorecard.csv").exists()
+        assert (backtests_dir / "expanded_episode_summary.csv").exists()
+        assert (backtests_dir / "expanded_threshold_analysis.csv").exists()
         assert not predictions.empty
         assert set(predictions["model_name"]).issuperset(
             {

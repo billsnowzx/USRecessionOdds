@@ -1,0 +1,15 @@
+model_name,target_name,horizon,split_name,event_mode,episode_number,episode_start,episode_end,first_warning_date,hit,timing_months,timing_type,flagged_3m_ahead,flagged_6m_ahead,max_score_in_window,false_alarm_months_before_episode,false_alarm_streak_before_episode
+hy_credit_logit,current_recession,0,fixed_2007_holdout,detect,1,2008-01-01,2009-06-01,2008-10-01,True,9.0,lag,False,False,0.9998821942579696,0,0
+hy_credit_logit,current_recession,0,fixed_2007_holdout,detect,2,2020-03-01,2020-04-01,,False,,lag,False,False,0.16749883484814113,1,1
+sahm_rule,current_recession,0,post_1990_monitoring,detect,1,1990-08-01,1991-03-01,1990-10-01,True,2.0,lag,False,False,1.2999999999999998,0,0
+sahm_rule,current_recession,0,post_1990_monitoring,detect,2,2001-04-01,2001-11-01,2001-06-01,True,2.0,lag,False,False,1.3666666666666667,19,19
+sahm_rule,current_recession,0,post_1990_monitoring,detect,3,2008-01-01,2009-06-01,2008-02-01,True,1.0,lag,False,False,3.7,12,10
+sahm_rule,current_recession,0,post_1990_monitoring,detect,4,2020-03-01,2020-04-01,2020-04-01,True,1.0,lag,False,False,4.0,11,11
+yield_curve_inversion,within_12m,12,fixed_1990_holdout,forecast,1,1990-08-01,1991-03-01,,False,,lead,False,False,-0.5638095238095238,0,0
+yield_curve_inversion,within_12m,12,fixed_1990_holdout,forecast,2,2001-04-01,2001-11-01,2000-08-01,True,8.0,lead,True,True,0.5285000000000002,0,0
+yield_curve_inversion,within_12m,12,fixed_1990_holdout,forecast,3,2008-01-01,2009-06-01,2007-01-01,True,12.0,lead,True,True,0.374545454545454,5,5
+yield_curve_inversion,within_12m,12,fixed_1990_holdout,forecast,4,2020-03-01,2020-04-01,2019-06-01,True,9.0,lead,True,True,0.323181818181818,0,0
+yield_curve_logit,within_12m,12,fixed_1990_holdout,forecast,1,1990-08-01,1991-03-01,,False,,lead,False,False,0.17455159577842952,0,0
+yield_curve_logit,within_12m,12,fixed_1990_holdout,forecast,2,2001-04-01,2001-11-01,2000-08-01,True,8.0,lead,True,True,0.7873687892589044,0,0
+yield_curve_logit,within_12m,12,fixed_1990_holdout,forecast,3,2008-01-01,2009-06-01,2007-01-01,True,12.0,lead,True,True,0.7121064522569903,5,5
+yield_curve_logit,within_12m,12,fixed_1990_holdout,forecast,4,2020-03-01,2020-04-01,2019-06-01,True,9.0,lead,True,True,0.6837408953894478,0,0

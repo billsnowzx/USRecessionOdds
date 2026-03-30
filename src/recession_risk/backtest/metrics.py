@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from recession_risk.backtest.event_metrics import summarize_event_metrics
+
 
 @dataclass
 class EventTimingResult:
@@ -25,7 +27,7 @@ def summarize_predictions(
     score = predictions["score"].astype(float).to_numpy()
 
     precision, recall, f1, false_positives = precision_recall_f1(y_true, signal)
-    event_timing = event_hit_rate(
+    event_summary = summarize_event_metrics(
         predictions,
         recession_periods,
         event_mode=event_mode,
@@ -45,10 +47,7 @@ def summarize_predictions(
         "false_positive_months": false_positives,
         "brier_score": brier_score(y_true, score) if probability_model else np.nan,
         "ece": expected_calibration_error(y_true, score) if probability_model else np.nan,
-        "event_hit_rate": event_timing.hit_rate,
-        "median_timing_months": event_timing.median_months,
-        "event_hits": event_timing.hits,
-        "n_events": event_timing.n_events,
+        **event_summary,
     }
 
 

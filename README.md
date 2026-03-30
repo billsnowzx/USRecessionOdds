@@ -65,6 +65,9 @@ If you do not install the package, run with `PYTHONPATH=src` and `python -m rece
 - `outputs/backtests/expanded_predictions*.csv`
 - `outputs/backtests/expanded_metrics*.csv`
 - `outputs/backtests/expanded_model_summary*.csv`
+- `outputs/backtests/*_event_scorecard.csv`
+- `outputs/backtests/*_episode_summary.csv`
+- `outputs/backtests/*_threshold_analysis.csv`
 
 ## Realtime mode
 
@@ -82,3 +85,11 @@ Phase 2 adds config-driven benchmark-adjacent models:
 - regularized logistic regression
 
 They are run through `run-expanded-models` and produce separate archived outputs for latest-available and realtime panel modes.
+
+## Event evaluation
+
+Phase 3 adds automatic event-oriented evaluation outputs whenever baseline, realtime, or expanded backtests are saved:
+
+- per-episode scorecards with first warning date and lead/lag timing
+- per-model episode summaries
+- threshold sweeps for probability-scored models

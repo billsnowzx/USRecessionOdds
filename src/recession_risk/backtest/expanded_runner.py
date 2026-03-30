@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from recession_risk.backtest.event_metrics import write_evaluation_outputs
 from recession_risk.backtest.metrics import summarize_predictions
 from recession_risk.ingest.nber import extract_recession_periods
 from recession_risk.models.logit_multivariate import MultivariateLogitModel
@@ -99,6 +100,8 @@ def save_expanded_outputs(
     predictions.to_csv(predictions_path, index=False)
     metrics.to_csv(metrics_path, index=False)
     summaries.to_csv(summaries_path, index=False)
+    prefix = "expanded" if data_mode == "latest_available" else "expanded_realtime"
+    write_evaluation_outputs(predictions, config, prefix=prefix)
     return predictions_path, metrics_path, summaries_path
 
 

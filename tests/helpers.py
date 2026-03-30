@@ -116,6 +116,10 @@ def write_test_config(base_dir: Path) -> Path:
             "sahm": {"test_start": "1990-01-01"},
         },
         "thresholds": {"inversion": 0.0, "sahm": 0.5, "probability": 0.5},
+        "evaluation": {
+            "thresholds": [0.15, 0.25, 0.35, 0.5],
+            "event_windows_months": [3, 6, 12],
+        },
     }
     config_dir = base_dir / "config"
     config_dir.mkdir(parents=True, exist_ok=True)

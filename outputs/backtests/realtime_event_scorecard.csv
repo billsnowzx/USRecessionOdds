@@ -1,0 +1,15 @@
+model_name,target_name,horizon,split_name,event_mode,episode_number,episode_start,episode_end,first_warning_date,hit,timing_months,timing_type,flagged_3m_ahead,flagged_6m_ahead,max_score_in_window,false_alarm_months_before_episode,false_alarm_streak_before_episode
+hy_credit_logit_realtime,current_recession,0,realtime_expanding,detect,1,2008-01-01,2009-06-01,2008-11-01,True,10.0,lag,False,False,0.9996224488443824,0,0
+hy_credit_logit_realtime,current_recession,0,realtime_expanding,detect,2,2020-03-01,2020-04-01,,False,,lag,False,False,0.18507321579523517,2,2
+sahm_rule_realtime,current_recession,0,realtime_expanding,detect,1,1990-08-01,1991-03-01,1991-01-01,True,5.0,lag,False,False,0.833333333333333,0,0
+sahm_rule_realtime,current_recession,0,realtime_expanding,detect,2,2001-04-01,2001-11-01,2001-09-01,True,5.0,lag,False,False,0.766666666666667,22,22
+sahm_rule_realtime,current_recession,0,realtime_expanding,detect,3,2008-01-01,2009-06-01,2008-05-01,True,4.0,lag,False,False,3.2666666666666666,15,13
+sahm_rule_realtime,current_recession,0,realtime_expanding,detect,4,2020-03-01,2020-04-01,,False,,lag,False,False,0.033333333333333215,14,14
+yield_curve_inversion_realtime,within_12m,12,realtime_expanding,forecast,1,1990-08-01,1991-03-01,,False,,lead,False,False,-0.20999999999999996,0,0
+yield_curve_inversion_realtime,within_12m,12,realtime_expanding,forecast,2,2001-04-01,2001-11-01,2000-09-01,True,7.0,lead,True,True,0.5285000000000002,0,0
+yield_curve_inversion_realtime,within_12m,12,realtime_expanding,forecast,3,2008-01-01,2009-06-01,2007-01-01,True,12.0,lead,True,True,0.37454545454545407,4,4
+yield_curve_inversion_realtime,within_12m,12,realtime_expanding,forecast,4,2020-03-01,2020-04-01,2019-07-01,True,8.0,lead,True,True,0.323181818181818,0,0
+yield_curve_logit_realtime,within_12m,12,realtime_expanding,forecast,1,1990-08-01,1991-03-01,,False,,lead,False,False,0.3561726766161206,0,0
+yield_curve_logit_realtime,within_12m,12,realtime_expanding,forecast,2,2001-04-01,2001-11-01,2000-09-01,True,7.0,lead,True,True,0.7563364977514225,0,0
+yield_curve_logit_realtime,within_12m,12,realtime_expanding,forecast,3,2008-01-01,2009-06-01,2007-01-01,True,12.0,lead,True,True,0.7370749450696719,4,4
+yield_curve_logit_realtime,within_12m,12,realtime_expanding,forecast,4,2020-03-01,2020-04-01,2019-06-01,True,9.0,lead,True,True,0.7244214514919672,0,0

@@ -81,3 +81,14 @@ thresholds:
   inversion: 0.0
   sahm: 0.5
   probability: 0.5
+
+evaluation:
+  thresholds:
+    - 0.15
+    - 0.25
+    - 0.35
+    - 0.5
+  event_windows_months:
+    - 3
+    - 6
+    - 12

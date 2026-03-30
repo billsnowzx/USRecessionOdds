@@ -1,0 +1,5 @@
+model_name,target_name,horizon,split_name,event_mode,episodes,episode_hits,episode_recall,average_timing_months,median_timing_months,flagged_3m_ahead_share,flagged_6m_ahead_share,avg_false_alarm_months_before_episode,max_false_alarm_streak_before_episode,max_score_in_window
+hy_credit_logit,current_recession,0,fixed_2007_holdout,detect,2,1,0.5,9.0,9.0,,,0.5,1,0.9998821942579696
+sahm_rule,current_recession,0,post_1990_monitoring,detect,4,4,1.0,1.5,1.5,,,10.5,19,4.0
+yield_curve_inversion,within_12m,12,fixed_1990_holdout,forecast,4,3,0.75,9.666666666666666,9.0,0.75,0.75,1.25,5,0.5285000000000002
+yield_curve_logit,within_12m,12,fixed_1990_holdout,forecast,4,3,0.75,9.666666666666666,9.0,0.75,0.75,1.25,5,0.7873687892589044

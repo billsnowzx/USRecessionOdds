@@ -1,0 +1,11 @@
+model_name,target_name,horizon,split_name,event_mode,episode_number,episode_start,episode_end,first_warning_date,hit,timing_months,timing_type,flagged_3m_ahead,flagged_6m_ahead,max_score_in_window,false_alarm_months_before_episode,false_alarm_streak_before_episode
+multivariate_logit_current_recession,current_recession,0,expanded_holdout,detect,1,2008-01-01,2009-06-01,2008-04-01,True,3.0,lag,False,False,0.9931795796830118,0,0
+multivariate_logit_current_recession,current_recession,0,expanded_holdout,detect,2,2020-03-01,2020-04-01,2020-03-01,True,0.0,lag,False,False,0.9999999999950184,56,54
+multivariate_logit_within_12m,within_12m,12,expanded_dynamic_holdout,forecast,1,2020-03-01,2020-04-01,2019-03-01,True,12.0,lead,True,True,0.9999891586461513,11,11
+multivariate_logit_within_3m,within_3m,3,expanded_dynamic_holdout,forecast,1,2020-03-01,2020-04-01,2019-12-01,True,3.0,lead,True,False,0.785366381836167,8,8
+multivariate_logit_within_6m,within_6m,6,expanded_dynamic_holdout,forecast,1,2020-03-01,2020-04-01,2019-09-01,True,6.0,lead,True,True,0.9578189920100078,8,8
+regularized_logit_current_recession,current_recession,0,expanded_holdout,detect,1,2008-01-01,2009-06-01,2009-01-01,True,12.0,lag,False,False,0.5004361921226628,0,0
+regularized_logit_current_recession,current_recession,0,expanded_holdout,detect,2,2020-03-01,2020-04-01,,False,,lag,False,False,0.1106932154544126,0,0
+regularized_logit_within_12m,within_12m,12,expanded_dynamic_holdout,forecast,1,2020-03-01,2020-04-01,,False,,lead,False,False,0.19654036045057036,0,0
+regularized_logit_within_3m,within_3m,3,expanded_dynamic_holdout,forecast,1,2020-03-01,2020-04-01,,False,,lead,False,False,0.029702026043852872,0,0
+regularized_logit_within_6m,within_6m,6,expanded_dynamic_holdout,forecast,1,2020-03-01,2020-04-01,,False,,lead,False,False,0.07737464549026862,0,0

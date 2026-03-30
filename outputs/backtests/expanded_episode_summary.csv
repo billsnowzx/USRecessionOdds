@@ -1,0 +1,9 @@
+model_name,target_name,horizon,split_name,event_mode,episodes,episode_hits,episode_recall,average_timing_months,median_timing_months,flagged_3m_ahead_share,flagged_6m_ahead_share,avg_false_alarm_months_before_episode,max_false_alarm_streak_before_episode,max_score_in_window
+multivariate_logit_current_recession,current_recession,0,expanded_holdout,detect,2,2,1.0,0.5,0.5,,,29.5,57,0.9999999999999964
+multivariate_logit_within_12m,within_12m,12,expanded_dynamic_holdout,forecast,1,1,1.0,12.0,12.0,1.0,1.0,12.0,11,0.9998169256039782
+multivariate_logit_within_3m,within_3m,3,expanded_dynamic_holdout,forecast,1,1,1.0,3.0,3.0,1.0,0.0,10.0,10,0.8534402432705518
+multivariate_logit_within_6m,within_6m,6,expanded_dynamic_holdout,forecast,1,1,1.0,6.0,6.0,1.0,1.0,9.0,9,0.9460744953770086
+regularized_logit_current_recession,current_recession,0,expanded_holdout,detect,2,1,0.5,11.0,11.0,,,0.0,0,0.6675921384900593
+regularized_logit_within_12m,within_12m,12,expanded_dynamic_holdout,forecast,1,0,0.0,,,0.0,0.0,0.0,0,0.19698351608322875
+regularized_logit_within_3m,within_3m,3,expanded_dynamic_holdout,forecast,1,0,0.0,,,0.0,0.0,0.0,0,0.02993442596174098
+regularized_logit_within_6m,within_6m,6,expanded_dynamic_holdout,forecast,1,0,0.0,,,0.0,0.0,0.0,0,0.0742186422388868

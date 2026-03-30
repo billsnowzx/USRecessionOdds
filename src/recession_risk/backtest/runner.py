@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from recession_risk.backtest.event_metrics import write_evaluation_outputs
 from recession_risk.backtest.metrics import summarize_predictions
 from recession_risk.ingest.nber import extract_recession_periods
 from recession_risk.models.baselines import (
@@ -34,6 +35,7 @@ def save_baseline_outputs(predictions: pd.DataFrame, metrics: pd.DataFrame, conf
     metrics_path = tables_dir / "baseline_metrics.csv"
     predictions.to_csv(predictions_path, index=False)
     metrics.to_csv(metrics_path, index=False)
+    write_evaluation_outputs(predictions, config, prefix="baseline")
     return predictions_path, metrics_path
 
 

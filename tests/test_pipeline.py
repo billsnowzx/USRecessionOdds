@@ -28,18 +28,31 @@ def test_pipeline_runs_end_to_end_with_offline_fixture():
         prediction_path, metrics_path = save_baseline_outputs(predictions, metrics, config)
         report_path = render_report(panel, predictions, metrics, config)
         robustness = run_robustness_backtests(config)
+        backtests_dir = config["paths"]["outputs"] / "backtests"
 
         assert prediction_path.exists()
         assert metrics_path.exists()
         assert report_path.exists()
         assert not robustness.empty
+        assert (backtests_dir / "baseline_event_scorecard.csv").exists()
+        assert (backtests_dir / "baseline_episode_summary.csv").exists()
+        assert (backtests_dir / "baseline_threshold_analysis.csv").exists()
         assert set(metrics["model_name"]) == {
             "yield_curve_logit",
             "yield_curve_inversion",
             "hy_credit_logit",
             "sahm_rule",
         }
-        assert {"auc", "precision", "recall", "event_hit_rate", "median_timing_months"}.issubset(metrics.columns)
+        assert {
+            "auc",
+            "precision",
+            "recall",
+            "event_hit_rate",
+            "median_timing_months",
+            "average_timing_months",
+            "episode_recall",
+            "max_false_alarm_streak",
+        }.issubset(metrics.columns)
     finally:
         shutil.rmtree(base_dir, ignore_errors=True)
 
