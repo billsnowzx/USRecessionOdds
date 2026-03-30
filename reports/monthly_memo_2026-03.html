@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>U.S. Recession Odds Memo: March 2026</title>
+  <style>
+    body { font-family: Georgia, "Times New Roman", serif; margin: 28px auto 48px; max-width: 1100px; color: #1f1d1a; line-height: 1.55; background: linear-gradient(180deg, #f7f2e8 0%, #efe9df 100%); }
+    h1, h2 { color: #1e3147; }
+    .hero { background: #17324d; color: #f8f3e8; padding: 24px 28px; border-radius: 16px; margin-bottom: 24px; }
+    .hero p { color: #ddd4c5; margin: 8px 0 0; }
+    .card { background: rgba(255,255,255,0.92); border: 1px solid #d8d2c8; border-radius: 14px; padding: 18px; margin: 0 0 20px; box-shadow: 0 8px 22px rgba(39,52,67,0.06); }
+    table { border-collapse: collapse; width: 100%; background: rgba(255,255,255,0.95); margin: 14px 0 24px; }
+    th, td { border: 1px solid #d8d2c8; padding: 8px 10px; text-align: left; }
+    th { background: #e9dfcf; }
+    img { width: 100%; height: auto; display: block; border-radius: 8px; margin: 10px 0 18px; }
+    .muted { color: #5d6770; }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>U.S. Recession Odds Memo: March 2026</h1>
+    <p>Prepared on March 30, 2026 from the repository's current monitoring HTML and saved snapshot outputs.</p>
+  </section>
+
+  <section class="card">
+    <h2>Bottom Line</h2>
+    <p>The current signal set still points to low near-term recession risk, but the 12-month outlook remains somewhat less comfortable than the very short horizons. The repo does not indicate an active recession or an imminent downturn over the next quarter, but it still assigns a somewhat higher probability to recession over the next year than over the next few months.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Horizon</th>
+          <th>Selected Model</th>
+          <th>As Of</th>
+          <th>Probability</th>
+          <th>Regime</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>P(recession now)</code></td>
+          <td>HY Credit Logit</td>
+          <td>2026-03-01</td>
+          <td>0.26%</td>
+          <td>low risk</td>
+        </tr>
+        <tr>
+          <td><code>P(recession within 3 months)</code></td>
+          <td>Multivariate Logit Within 3M</td>
+          <td>2026-02-01</td>
+          <td>7.43%</td>
+          <td>low risk</td>
+        </tr>
+        <tr>
+          <td><code>P(recession within 6 months)</code></td>
+          <td>Multivariate Logit Within 6M</td>
+          <td>2026-02-01</td>
+          <td>13.10%</td>
+          <td>low risk</td>
+        </tr>
+        <tr>
+          <td><code>P(recession within 12 months)</code></td>
+          <td>Yield Curve Logit</td>
+          <td>2026-03-01</td>
+          <td>15.60%</td>
+          <td>rising risk</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted">The snapshot mixes March 1, 2026 and February 1, 2026 model dates because those are the most recent saved outputs for each selected horizon.</p>
+  </section>
+
+  <section class="card">
+    <h2>Key Signals</h2>
+    <p>Credit remains calm. The HY credit model is the strongest nowcast in the stack and currently reports only <strong>0.26%</strong> recession probability. Labor-market deterioration is not confirmed by the selected snapshot, although the Sahm rule remains materially more cautious than the credit-based nowcast. The term spread is positive and steepening, which is better than an inversion regime, but the 12-month yield-curve probability still sits at a relatively elevated historical percentile for its own series. Model disagreement is high, especially for the 12-month horizon, where some expanded models remain much more aggressive than the selected benchmark.</p>
+  </section>
+
+  <section class="card">
+    <h2>Interpretation</h2>
+    <p>For March 2026, the most defensible summary is: no clear recession signal now, low odds over the next 3 to 6 months, and a still-watchful 12-month outlook. That is not a recession call, but it is also not a fully benign all-clear.</p>
+    <p>From an allocation and monitoring perspective, the message is more about discipline than urgency. Equities do not require a full defensive posture, but quality and earnings resilience still make sense. Some duration ballast remains useful if the medium-horizon growth outlook softens. Current spread behavior does not suggest acute stress, but lower-quality credit risk should still be sized carefully. Optionality is still worth carrying, though the short-horizon models do not justify a maximal risk-off stance.</p>
+  </section>
+
+  <section class="card">
+    <h2>What Would Change This View</h2>
+    <p>The memo would turn more negative if the Sahm gap moved decisively through recession-trigger territory, HY spreads widened sharply and stayed wide, the 3-month and 6-month models moved out of low-risk territory, or the yield curve re-flattened or re-inverted in a sustained way. The medium-horizon concern would fade if the 12-month probability moved back into the low-risk bucket and model disagreement narrowed.</p>
+  </section>
+
+  <section class="card">
+    <h2>Charts</h2>
+    <img src="../outputs/reports/charts/selected_probabilities.png" alt="Selected probabilities">
+    <img src="../outputs/reports/charts/historical_percentiles.png" alt="Historical percentiles">
+    <img src="../outputs/reports/charts/current_model_comparison.png" alt="Current model comparison">
+    <img src="../outputs/reports/charts/episode_warning_timing.png" alt="Episode warning timing">
+  </section>
+
+  <section class="card">
+    <h2>Source Files</h2>
+    <p><a href="D:/AI/Recession_Odds/reports/recession_risk_summary.html">Summary HTML</a></p>
+    <p><a href="D:/AI/Recession_Odds/outputs/reports/tables/current_snapshot.csv">Snapshot table</a></p>
+    <p><a href="D:/AI/Recession_Odds/outputs/reports/tables/model_comparison.csv">Model comparison table</a></p>
+  </section>
+</body>
+</html>
