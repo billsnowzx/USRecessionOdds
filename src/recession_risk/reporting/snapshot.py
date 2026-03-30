@@ -9,6 +9,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandas.errors import EmptyDataError
+
+from recession_risk.backtest.model_selection import (
+    apply_selection_gates,
+    is_probability_model_name,
+    sort_candidate_metrics,
+)
 
 TARGET_LABELS = {
     "current_recession": "P(recession now)",
@@ -18,20 +25,20 @@ TARGET_LABELS = {
 }
 
 TARGET_ORDER = ["current_recession", "within_3m", "within_6m", "within_12m"]
+MODE_LABELS = {
+    "latest_available": "Latest available",
+    "realtime": "Realtime",
+}
 
 MODEL_COLORS = {
     "yield_curve_logit": "#b54d3e",
     "yield_curve_inversion": "#2f5d7c",
     "hy_credit_logit": "#356f52",
     "sahm_rule": "#7e654d",
-    "multivariate_logit_within_3m": "#006d77",
-    "multivariate_logit_within_6m": "#1d7874",
-    "multivariate_logit_within_12m": "#3a7d44",
-    "multivariate_logit_current_recession": "#7b2d26",
-    "regularized_logit_within_3m": "#4d908e",
-    "regularized_logit_within_6m": "#577590",
-    "regularized_logit_within_12m": "#90be6d",
-    "regularized_logit_current_recession": "#bc6c25",
+    "multivariate_logit": "#006d77",
+    "regularized_logit": "#577590",
+    "ensemble": "#7a3e9d",
+    "tree_boosting": "#a663cc",
 }
 
 
@@ -53,72 +60,116 @@ def load_reporting_inputs(
     config: dict,
     baseline_predictions: pd.DataFrame,
     baseline_metrics: pd.DataFrame,
+    data_mode: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    predictions_frames = [baseline_predictions.copy()]
-    metrics_frames = [baseline_metrics.copy()]
     backtests_dir = config["paths"]["outputs"] / "backtests"
+    if data_mode == "latest_available":
+        predictions_frames = [baseline_predictions.copy()]
+        metrics_frames = [baseline_metrics.copy()]
+        optional_paths = [("expanded_predictions.csv", "expanded_metrics.csv")]
+    else:
+        predictions_frames = []
+        metrics_frames = []
+        optional_paths = [
+            ("realtime_predictions.csv", "realtime_metrics.csv"),
+            ("expanded_predictions_realtime.csv", "expanded_metrics_realtime.csv"),
+        ]
 
-    optional_paths = [
-        ("expanded_predictions.csv", "expanded_metrics.csv"),
-    ]
     for prediction_name, metrics_name in optional_paths:
         prediction_path = backtests_dir / prediction_name
         metrics_path = backtests_dir / metrics_name
         if prediction_path.exists() and metrics_path.exists():
-            prediction_frame = pd.read_csv(prediction_path)
-            metrics_frame = pd.read_csv(metrics_path)
+            try:
+                prediction_frame = pd.read_csv(prediction_path)
+                metrics_frame = pd.read_csv(metrics_path)
+            except EmptyDataError:
+                continue
             for column in [name for name in ["date", "forecast_date", "train_end", "test_start"] if name in prediction_frame.columns]:
                 prediction_frame[column] = pd.to_datetime(prediction_frame[column], errors="coerce")
             predictions_frames.append(prediction_frame)
             metrics_frames.append(metrics_frame)
 
-    return (
-        pd.concat(predictions_frames, ignore_index=True, sort=False),
-        pd.concat(metrics_frames, ignore_index=True, sort=False),
-    )
+    predictions = pd.concat(predictions_frames, ignore_index=True, sort=False) if predictions_frames else pd.DataFrame()
+    metrics = pd.concat(metrics_frames, ignore_index=True, sort=False) if metrics_frames else pd.DataFrame()
+    if not metrics.empty:
+        metrics = apply_selection_gates(metrics, config)
+    return predictions, metrics
 
 
 def build_snapshot_tables(
     predictions: pd.DataFrame,
     metrics: pd.DataFrame,
     config: dict,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    data_mode: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     snapshot_rows: list[dict[str, object]] = []
     comparison_rows: list[dict[str, object]] = []
+    quality_rows: list[dict[str, object]] = []
+    mode_label = MODE_LABELS.get(data_mode, data_mode.replace("_", " ").title())
+
+    if metrics.empty or predictions.empty:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+    gated_metrics = apply_selection_gates(metrics, config) if "passes_selection_gates" not in metrics.columns else metrics.copy()
+    if "is_benchmark" in gated_metrics.columns:
+        gated_metrics["is_benchmark"] = gated_metrics["is_benchmark"].fillna(False).astype(bool)
+    if "passes_selection_gates" in gated_metrics.columns:
+        gated_metrics["passes_selection_gates"] = gated_metrics["passes_selection_gates"].fillna(False).astype(bool)
 
     for target_name in TARGET_ORDER:
-        target_metrics = metrics[metrics["target_name"] == target_name].copy()
+        target_metrics = gated_metrics[gated_metrics["target_name"] == target_name].copy()
         if target_metrics.empty:
             continue
-        target_metrics["probability_model"] = target_metrics["model_name"].apply(is_probability_model)
-        target_metrics = target_metrics.sort_values(
-            ["probability_model", "auc", "event_hit_rate", "precision"],
-            ascending=[False, False, False, False],
-        )
+        target_metrics = sort_candidate_metrics(target_metrics)
+        selected_row, fallback_reason = select_snapshot_model(target_metrics)
 
         for _, metric_row in target_metrics.iterrows():
-            model_name = metric_row["model_name"]
+            model_name = str(metric_row["model_name"])
             frame = predictions[predictions["model_name"] == model_name].sort_values("date").copy()
             if frame.empty:
                 continue
             latest = frame.iloc[-1]
             normalized_history = normalized_model_values(frame)
             latest_probability = float(normalized_history.iloc[-1])
+            selected = model_name == str(selected_row["model_name"])
+            selection_status = "selected" if selected else ("eligible_candidate" if bool(metric_row["passes_selection_gates"]) else "rejected")
+            quality_rows.append(
+                {
+                    "Mode": mode_label,
+                    "Target": TARGET_LABELS.get(target_name, target_name),
+                    "Model": model_title(model_name),
+                    "Model family": model_family_label(model_name),
+                    "Selected": selected,
+                    "Selection status": selection_status,
+                    "Quality gates": "pass" if bool(metric_row["passes_selection_gates"]) else "fail",
+                    "Gate reasons": str(metric_row.get("selection_gate_reasons", "")),
+                    "Fallback reason": fallback_reason if selected else "",
+                    "AUC": safe_metric(metric_row.get("auc")),
+                    "ECE": safe_metric(metric_row.get("ece")),
+                    "Episode recall": safe_metric(metric_row.get("episode_recall")),
+                    "Max false alarm streak": safe_metric(metric_row.get("max_false_alarm_streak")),
+                    "Probability": latest_probability,
+                }
+            )
             comparison_rows.append(
                 {
+                    "Mode": mode_label,
                     "Target": TARGET_LABELS.get(target_name, target_name),
                     "Model": model_title(model_name),
                     "As of": str(pd.Timestamp(latest["date"]).date()),
                     "Probability": latest_probability,
-                    "Raw score": float(latest["score"]),
+                    "Raw score": float(latest.get("raw_score", latest["score"])),
+                    "Calibrated score": float(latest["score"]),
                     "Historical percentile": percentile_rank(normalized_history, latest_probability),
-                    "AUC": float(metric_row["auc"]) if pd.notna(metric_row["auc"]) else np.nan,
-                    "Episode recall": float(metric_row["episode_recall"]) if pd.notna(metric_row.get("episode_recall")) else np.nan,
+                    "AUC": safe_metric(metric_row.get("auc")),
+                    "Episode recall": safe_metric(metric_row.get("episode_recall")),
+                    "Quality gates": "pass" if bool(metric_row["passes_selection_gates"]) else "fail",
+                    "Gate reasons": str(metric_row.get("selection_gate_reasons", "")),
                     "Regime": classify_regime(latest_probability, config),
                 }
             )
 
-        selected_model_name = target_metrics.iloc[0]["model_name"]
+        selected_model_name = str(selected_row["model_name"])
         selected_frame = predictions[predictions["model_name"] == selected_model_name].sort_values("date").copy()
         if selected_frame.empty:
             continue
@@ -127,44 +178,117 @@ def build_snapshot_tables(
         latest_probability = float(normalized_history.iloc[-1])
         snapshot_rows.append(
             {
+                "Mode": mode_label,
                 "Target": TARGET_LABELS.get(target_name, target_name),
                 "Selected model": model_title(selected_model_name),
                 "As of": str(pd.Timestamp(latest["date"]).date()),
                 "Probability": latest_probability,
                 "Historical percentile": percentile_rank(normalized_history, latest_probability),
                 "Regime": classify_regime(latest_probability, config),
+                "Quality gates": "pass" if bool(selected_row["passes_selection_gates"]) else "fail",
+                "Selection note": fallback_reason or "Selected from eligible candidates",
                 "model_name": selected_model_name,
             }
         )
 
     snapshot = pd.DataFrame(snapshot_rows)
     comparison = pd.DataFrame(comparison_rows)
+    quality = pd.DataFrame(quality_rows)
     categories = [TARGET_LABELS[item] for item in TARGET_ORDER]
-    if not snapshot.empty:
-        snapshot["Target"] = pd.Categorical(snapshot["Target"], categories=categories, ordered=True)
-        snapshot = snapshot.sort_values("Target").reset_index(drop=True)
-    if not comparison.empty:
-        comparison["Target"] = pd.Categorical(comparison["Target"], categories=categories, ordered=True)
-        comparison = comparison.sort_values(["Target", "AUC"], ascending=[True, False]).reset_index(drop=True)
-    return snapshot, comparison
+    for frame in [snapshot, comparison, quality]:
+        if not frame.empty and "Target" in frame.columns:
+            frame["Target"] = pd.Categorical(frame["Target"], categories=categories, ordered=True)
+            frame.sort_values("Target", inplace=True)
+            frame.reset_index(drop=True, inplace=True)
+    return snapshot, comparison, quality
 
 
-def write_reporting_tables(snapshot: pd.DataFrame, comparison: pd.DataFrame, dirs: dict[str, Path]) -> None:
-    snapshot.drop(columns=["model_name"], errors="ignore").to_csv(dirs["tables"] / "current_snapshot.csv", index=False)
-    comparison.to_csv(dirs["tables"] / "model_comparison.csv", index=False)
+def build_mode_comparison_table(latest_snapshot: pd.DataFrame, realtime_snapshot: pd.DataFrame, config: dict) -> pd.DataFrame:
+    if latest_snapshot.empty and realtime_snapshot.empty:
+        return pd.DataFrame()
+
+    latest_frame = latest_snapshot.copy()
+    realtime_frame = realtime_snapshot.copy()
+    if latest_frame.empty:
+        latest_frame = pd.DataFrame(columns=["Target", "Selected model", "As of", "Probability", "Regime", "Selection note"])
+    if realtime_frame.empty:
+        realtime_frame = pd.DataFrame(columns=["Target", "Selected model", "As of", "Probability", "Regime", "Selection note"])
+
+    latest_frame = latest_frame.rename(
+        columns={
+            "Selected model": "Latest available model",
+            "As of": "Latest available as of",
+            "Probability": "Latest available probability",
+            "Regime": "Latest available regime",
+            "Selection note": "Latest available note",
+        }
+    ).drop(columns=["Mode", "Historical percentile", "Quality gates", "model_name"], errors="ignore")
+    realtime_frame = realtime_frame.rename(
+        columns={
+            "Selected model": "Realtime model",
+            "As of": "Realtime as of",
+            "Probability": "Realtime probability",
+            "Regime": "Realtime regime",
+            "Selection note": "Realtime note",
+        }
+    ).drop(columns=["Mode", "Historical percentile", "Quality gates", "model_name"], errors="ignore")
+
+    merged = latest_frame.merge(realtime_frame, on="Target", how="outer")
+    merged["Probability delta"] = merged["Latest available probability"].astype(float) - merged["Realtime probability"].astype(float)
+    threshold = float(config.get("reporting", {}).get("material_difference_threshold", 0.1))
+    merged["Material gap"] = merged["Probability delta"].abs() >= threshold
+    return merged.sort_values("Target").reset_index(drop=True)
 
 
-def write_supporting_markdown(snapshot: pd.DataFrame, comparison: pd.DataFrame, dirs: dict[str, Path]) -> None:
+def write_reporting_tables(
+    latest_snapshot: pd.DataFrame,
+    latest_comparison: pd.DataFrame,
+    realtime_snapshot: pd.DataFrame,
+    realtime_comparison: pd.DataFrame,
+    mode_comparison: pd.DataFrame,
+    quality: pd.DataFrame,
+    dirs: dict[str, Path],
+) -> None:
+    latest_snapshot.drop(columns=["model_name"], errors="ignore").to_csv(dirs["tables"] / "current_snapshot.csv", index=False)
+    latest_snapshot.drop(columns=["model_name"], errors="ignore").to_csv(dirs["tables"] / "current_snapshot_latest_available.csv", index=False)
+    realtime_snapshot.drop(columns=["model_name"], errors="ignore").to_csv(dirs["tables"] / "current_snapshot_realtime.csv", index=False)
+    latest_comparison.to_csv(dirs["tables"] / "model_comparison.csv", index=False)
+    latest_comparison.to_csv(dirs["tables"] / "model_comparison_latest_available.csv", index=False)
+    realtime_comparison.to_csv(dirs["tables"] / "model_comparison_realtime.csv", index=False)
+    mode_comparison.to_csv(dirs["tables"] / "snapshot_mode_comparison.csv", index=False)
+    quality.to_csv(dirs["tables"] / "model_selection_quality.csv", index=False)
+
+
+def write_supporting_markdown(
+    latest_snapshot: pd.DataFrame,
+    latest_comparison: pd.DataFrame,
+    realtime_snapshot: pd.DataFrame,
+    realtime_comparison: pd.DataFrame,
+    mode_comparison: pd.DataFrame,
+    quality: pd.DataFrame,
+    chart_paths: dict[str, Path],
+    dirs: dict[str, Path],
+) -> None:
     (dirs["current_snapshot"] / "current_snapshot.md").write_text(
         "\n".join(
             [
                 "# Current Snapshot",
                 "",
-                snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False),
+                "## Latest Available",
                 "",
-                f"Overall regime: {snapshot_overall_regime(snapshot)}",
+                latest_snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False) if not latest_snapshot.empty else "No latest-available snapshot data available.",
                 "",
-                "![Historical Percentiles](../charts/historical_percentiles.png)",
+                "## Realtime",
+                "",
+                realtime_snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False) if not realtime_snapshot.empty else "No realtime snapshot data available.",
+                "",
+                "## Mode Comparison",
+                "",
+                mode_comparison.round(4).to_markdown(index=False) if not mode_comparison.empty else "No mode comparison available.",
+                "",
+                f"![Latest available selected history](../charts/{chart_paths['selected_probabilities_latest_available'].name})",
+                "",
+                f"![Realtime selected history](../charts/{chart_paths['selected_probabilities_realtime'].name})",
             ]
         ),
         encoding="utf-8",
@@ -174,13 +298,23 @@ def write_supporting_markdown(snapshot: pd.DataFrame, comparison: pd.DataFrame, 
             [
                 "# Historical Comparison",
                 "",
-                comparison.round(4).to_markdown(index=False),
+                "## Latest Available Model Comparison",
                 "",
-                "![Selected Probabilities](../charts/selected_probabilities.png)",
+                latest_comparison.round(4).to_markdown(index=False) if not latest_comparison.empty else "No latest-available model comparison data available.",
                 "",
-                "![Current Model Comparison](../charts/current_model_comparison.png)",
+                "## Realtime Model Comparison",
                 "",
-                "![Episode Warning Timing](../charts/episode_warning_timing.png)",
+                realtime_comparison.round(4).to_markdown(index=False) if not realtime_comparison.empty else "No realtime model comparison data available.",
+                "",
+                "## Model Quality Governance",
+                "",
+                quality.round(4).to_markdown(index=False) if not quality.empty else "No quality table available.",
+                "",
+                f"![Latest available percentiles](../charts/{chart_paths['historical_percentiles_latest_available'].name})",
+                "",
+                f"![Realtime percentiles](../charts/{chart_paths['historical_percentiles_realtime'].name})",
+                "",
+                f"![Episode warning timing](../charts/{chart_paths['episode_warning_timing'].name})",
             ]
         ),
         encoding="utf-8",
@@ -193,30 +327,44 @@ def load_episode_summary(config: dict) -> pd.DataFrame:
     for name in [
         "baseline_episode_summary.csv",
         "expanded_episode_summary.csv",
+        "realtime_episode_summary.csv",
+        "expanded_realtime_episode_summary.csv",
     ]:
         path = backtests_dir / name
         if path.exists():
-            frames.append(pd.read_csv(path))
+            frame = pd.read_csv(path)
+            if frame.empty:
+                continue
+            frame["source_file"] = name
+            frames.append(frame)
     return pd.concat(frames, ignore_index=True, sort=False) if frames else pd.DataFrame()
 
 
 def render_reporting_charts(
-    snapshot: pd.DataFrame,
-    comparison: pd.DataFrame,
-    predictions: pd.DataFrame,
+    latest_snapshot: pd.DataFrame,
+    latest_comparison: pd.DataFrame,
+    latest_predictions: pd.DataFrame,
+    realtime_snapshot: pd.DataFrame,
+    realtime_comparison: pd.DataFrame,
+    realtime_predictions: pd.DataFrame,
     episode_summary: pd.DataFrame,
     recession_periods: list[tuple[pd.Timestamp, pd.Timestamp]],
     dirs: dict[str, Path],
 ) -> dict[str, Path]:
     return {
-        "selected_probabilities": plot_selected_probability_history(snapshot, predictions, recession_periods, dirs["charts"] / "selected_probabilities.png"),
-        "historical_percentiles": plot_historical_percentiles(snapshot, dirs["charts"] / "historical_percentiles.png"),
-        "current_model_comparison": plot_current_model_comparison(comparison, dirs["charts"] / "current_model_comparison.png"),
+        "selected_probabilities_latest_available": plot_selected_probability_history(latest_snapshot, latest_predictions, recession_periods, dirs["charts"] / "selected_probabilities_latest_available.png", "Latest available selected probabilities"),
+        "selected_probabilities_realtime": plot_selected_probability_history(realtime_snapshot, realtime_predictions, recession_periods, dirs["charts"] / "selected_probabilities_realtime.png", "Realtime selected probabilities"),
+        "historical_percentiles_latest_available": plot_historical_percentiles(latest_snapshot, dirs["charts"] / "historical_percentiles_latest_available.png", "Latest available readings vs historical range"),
+        "historical_percentiles_realtime": plot_historical_percentiles(realtime_snapshot, dirs["charts"] / "historical_percentiles_realtime.png", "Realtime readings vs historical range"),
+        "current_model_comparison_latest_available": plot_current_model_comparison(latest_comparison, dirs["charts"] / "current_model_comparison_latest_available.png", "Latest available model comparison"),
+        "current_model_comparison_realtime": plot_current_model_comparison(realtime_comparison, dirs["charts"] / "current_model_comparison_realtime.png", "Realtime model comparison"),
         "episode_warning_timing": plot_episode_warning_timing(episode_summary, dirs["charts"] / "episode_warning_timing.png"),
     }
 
 
-def build_signal_driver_summary(panel: pd.DataFrame, snapshot: pd.DataFrame, comparison: pd.DataFrame) -> str:
+def build_signal_driver_summary(panel: pd.DataFrame, snapshot: pd.DataFrame, comparison: pd.DataFrame, mode_comparison: pd.DataFrame | None = None) -> str:
+    if panel.empty:
+        return "- No panel data available."
     latest = panel.sort_values("date").iloc[-1]
     prior = panel.sort_values("date").iloc[max(len(panel) - 7, 0)]
     parts = [
@@ -226,6 +374,8 @@ def build_signal_driver_summary(panel: pd.DataFrame, snapshot: pd.DataFrame, com
         risk_trend_text(snapshot),
         model_disagreement_text(comparison),
     ]
+    if mode_comparison is not None and not mode_comparison.empty:
+        parts.append(mode_gap_text(mode_comparison))
     return "\n".join(f"- {part}" for part in parts if part)
 
 
@@ -276,39 +426,48 @@ def plot_selected_probability_history(
     predictions: pd.DataFrame,
     recession_periods: list[tuple[pd.Timestamp, pd.Timestamp]],
     output_path: str | Path,
+    title: str,
 ) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(12, 5))
-    for _, row in snapshot.iterrows():
-        model_name = row["model_name"]
-        frame = predictions[predictions["model_name"] == model_name].sort_values("date")
-        if frame.empty:
-            continue
-        ax.plot(frame["date"], normalized_model_values(frame), linewidth=2, label=str(row["Target"]), color=model_color(model_name))
+    if snapshot.empty or predictions.empty:
+        ax.text(0.5, 0.5, "No selected history available", ha="center", va="center")
+    else:
+        for _, row in snapshot.iterrows():
+            model_name = row["model_name"]
+            frame = predictions[predictions["model_name"] == model_name].sort_values("date")
+            if frame.empty:
+                continue
+            ax.plot(frame["date"], normalized_model_values(frame), linewidth=2, label=str(row["Target"]), color=model_color(model_name))
     for start, end in recession_periods:
         ax.axvspan(start, end + pd.offsets.MonthEnd(0), color="#d8d8d8", alpha=0.35)
     ax.set_ylim(-0.02, 1.02)
-    ax.set_title("Selected Nowcast and Forward Recession Probabilities")
+    ax.set_title(title)
     ax.set_ylabel("Normalized probability")
     ax.grid(alpha=0.2)
-    ax.legend(loc="upper left")
+    handles, labels = ax.get_legend_handles_labels()
+    if handles:
+        ax.legend(loc="upper left")
     fig.tight_layout()
     fig.savefig(output, dpi=150)
     plt.close(fig)
     return output
 
 
-def plot_historical_percentiles(snapshot: pd.DataFrame, output_path: str | Path) -> Path:
+def plot_historical_percentiles(snapshot: pd.DataFrame, output_path: str | Path, title: str) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(10, 4.5))
-    labels = snapshot["Target"].astype(str).tolist() if not snapshot.empty else []
-    values = snapshot["Historical percentile"].astype(float).to_numpy() if not snapshot.empty else np.array([])
-    colors = [model_color(model_name) for model_name in snapshot["model_name"]] if "model_name" in snapshot.columns else []
-    ax.bar(labels, values, color=colors)
+    if snapshot.empty:
+        ax.text(0.5, 0.5, "No snapshot available", ha="center", va="center")
+    else:
+        labels = snapshot["Target"].astype(str).tolist()
+        values = snapshot["Historical percentile"].astype(float).to_numpy()
+        colors = [model_color(model_name) for model_name in snapshot["model_name"]]
+        ax.bar(labels, values, color=colors)
     ax.set_ylim(0.0, 1.0)
-    ax.set_title("Current Readings vs Historical Range")
+    ax.set_title(title)
     ax.set_ylabel("Percentile of own history")
     ax.grid(axis="y", alpha=0.2)
     fig.autofmt_xdate(rotation=15)
@@ -318,7 +477,7 @@ def plot_historical_percentiles(snapshot: pd.DataFrame, output_path: str | Path)
     return output
 
 
-def plot_current_model_comparison(comparison: pd.DataFrame, output_path: str | Path) -> Path:
+def plot_current_model_comparison(comparison: pd.DataFrame, output_path: str | Path, title: str) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(12, 5))
@@ -326,10 +485,10 @@ def plot_current_model_comparison(comparison: pd.DataFrame, output_path: str | P
         ax.text(0.5, 0.5, "No model comparison data available", ha="center", va="center")
     else:
         labels = [f"{target}\n{model}" for target, model in zip(comparison["Target"], comparison["Model"])]
-        ax.bar(labels, comparison["Probability"].astype(float).to_numpy(), color=[model_color_from_title(title) for title in comparison["Model"]])
+        ax.bar(labels, comparison["Probability"].astype(float).to_numpy(), color=[model_color_from_title(title_value) for title_value in comparison["Model"]])
         ax.set_ylim(0.0, 1.0)
         ax.grid(axis="y", alpha=0.2)
-    ax.set_title("Current Reading by Available Model")
+    ax.set_title(title)
     ax.set_ylabel("Normalized probability")
     fig.autofmt_xdate(rotation=25)
     fig.tight_layout()
@@ -350,7 +509,7 @@ def plot_episode_warning_timing(episode_summary: pd.DataFrame, output_path: str 
         values = frame["average_timing_months"].fillna(0.0).astype(float).to_numpy()
         ax.barh(labels, values, color=[model_color(model_name) for model_name in frame["model_name"]])
         ax.grid(axis="x", alpha=0.2)
-    ax.set_title("Episode Timing by Model")
+    ax.set_title("Episode timing by model")
     ax.set_xlabel("Average lead or lag months")
     fig.tight_layout()
     fig.savefig(output, dpi=150)
@@ -386,6 +545,15 @@ def model_disagreement_text(comparison: pd.DataFrame) -> str:
     if average_range >= 0.10:
         return "Model disagreement is moderate; direction is shared but conviction differs."
     return "Model disagreement is low; available models are broadly aligned."
+
+
+def mode_gap_text(mode_comparison: pd.DataFrame) -> str:
+    if mode_comparison.empty:
+        return "Realtime comparison is unavailable."
+    if bool(mode_comparison["Material gap"].fillna(False).any()):
+        targets = ", ".join(mode_comparison.loc[mode_comparison["Material gap"], "Target"].astype(str))
+        return f"Latest-available and realtime snapshots differ materially for {targets}."
+    return "Latest-available and realtime snapshots are broadly aligned."
 
 
 def risk_trend_text(snapshot: pd.DataFrame) -> str:
@@ -440,7 +608,7 @@ def sahm_gap_text(latest: pd.Series, prior: pd.Series) -> str:
 
 
 def normalized_model_values(frame: pd.DataFrame) -> pd.Series:
-    model_name = str(frame["model_name"].iloc[0])
+    model_name = normalize_model_key(str(frame["model_name"].iloc[0]))
     if model_name == "yield_curve_inversion":
         return frame["signal"].astype(float).clip(lower=0.0, upper=1.0)
     if model_name == "sahm_rule":
@@ -455,13 +623,23 @@ def percentile_rank(history: pd.Series, latest_value: float) -> float:
     return float((series <= float(latest_value)).mean())
 
 
+def select_snapshot_model(target_metrics: pd.DataFrame) -> tuple[pd.Series, str]:
+    expanded_candidates = target_metrics[(~target_metrics["is_benchmark"].astype(bool)) & (target_metrics["passes_selection_gates"].astype(bool))]
+    if not expanded_candidates.empty:
+        return expanded_candidates.iloc[0], ""
+    benchmark_candidates = sort_candidate_metrics(target_metrics[target_metrics["is_benchmark"].astype(bool)])
+    if benchmark_candidates.empty:
+        return target_metrics.iloc[0], "No benchmark candidate available; using best available model."
+    return benchmark_candidates.iloc[0], "No expanded model passed quality gates; falling back to benchmark."
+
+
 def is_probability_model(model_name: str) -> bool:
-    lowered = str(model_name).lower()
-    return any(token in lowered for token in ["logit", "multivariate", "regularized"])
+    return is_probability_model_name(model_name)
 
 
 def model_title(model_name: str) -> str:
-    words = re.sub(r"[_\-]+", " ", str(model_name)).split()
+    normalized = normalize_model_key(model_name)
+    words = re.sub(r"[_\-]+", " ", normalized).split()
     formatted = []
     for word in words:
         lowered = word.lower()
@@ -471,15 +649,45 @@ def model_title(model_name: str) -> str:
             formatted.append(word.upper())
         else:
             formatted.append(word.capitalize())
+    if str(model_name).endswith("_realtime"):
+        formatted.append("(Realtime)")
     return " ".join(formatted)
 
 
+def model_family_label(model_name: str) -> str:
+    normalized = normalize_model_key(model_name)
+    if normalized in {"yield_curve_logit", "yield_curve_inversion", "hy_credit_logit", "sahm_rule"}:
+        return "Benchmark"
+    if normalized.startswith("ensemble"):
+        return "Ensemble"
+    if normalized.startswith("tree_boosting"):
+        return "Tree model"
+    return "Expanded logit"
+
+
+def normalize_model_key(model_name: str) -> str:
+    name = str(model_name)
+    return name[:-9] if name.endswith("_realtime") else name
+
+
 def model_color(model_name: str) -> str:
-    return MODEL_COLORS.get(str(model_name), "#4c6a92")
+    normalized = normalize_model_key(model_name)
+    for prefix, color in MODEL_COLORS.items():
+        if normalized.startswith(prefix):
+            return color
+    return "#4c6a92"
 
 
 def model_color_from_title(title: str) -> str:
-    for model_name in MODEL_COLORS:
-        if model_title(model_name) == title:
-            return MODEL_COLORS[model_name]
+    normalized_title = title.replace(" (Realtime)", "")
+    for model_key in MODEL_COLORS:
+        if model_title(model_key) == normalized_title:
+            return MODEL_COLORS[model_key]
     return "#4c6a92"
+
+
+def safe_metric(value) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")

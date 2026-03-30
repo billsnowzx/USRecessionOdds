@@ -18,7 +18,7 @@ from recession_risk.reporting.report import render_html_summary, render_report
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Recession risk replication pipeline")
+    parser = argparse.ArgumentParser(description="U.S. recession odds platform")
     parser.add_argument("--config", default="config/default.yaml", help="Path to YAML config")
     subparsers = parser.add_subparsers(dest="command", required=True)
 

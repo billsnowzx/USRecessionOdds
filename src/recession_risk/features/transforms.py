@@ -48,3 +48,60 @@ def compute_sahm_gap(unemployment: pd.Series) -> pd.Series:
     three_month_avg = unemployment.rolling(window=3, min_periods=3).mean()
     rolling_min = three_month_avg.rolling(window=12, min_periods=1).min()
     return three_month_avg - rolling_min
+
+
+def compute_three_month_annualized_growth(levels: pd.Series) -> pd.Series:
+    prior = levels.shift(3)
+    ratio = levels.divide(prior.where(prior != 0))
+    return ((ratio.pow(4) - 1.0) * 100.0).where(prior.notna())
+
+
+def compute_three_month_change(levels: pd.Series) -> pd.Series:
+    return levels - levels.shift(3)
+
+
+def compute_three_month_growth(levels: pd.Series) -> pd.Series:
+    prior = levels.shift(3)
+    ratio = levels.divide(prior.where(prior != 0))
+    return ((ratio - 1.0) * 100.0).where(prior.notna())
+
+
+def compute_drawdown(levels: pd.Series, window: int) -> pd.Series:
+    rolling_peak = levels.rolling(window=window, min_periods=1).max()
+    return ((rolling_peak - levels).divide(rolling_peak.where(rolling_peak != 0)) * 100.0).clip(lower=0.0)
+
+
+def apply_configured_feature_transforms(panel: pd.DataFrame, series_specs: dict[str, dict]) -> pd.DataFrame:
+    transformed = panel.copy()
+    for series_id, spec in series_specs.items():
+        if series_id not in transformed.columns:
+            continue
+        transform = str(spec.get("transform", "level"))
+        feature_name = str(spec.get("feature_name", series_id))
+        series = pd.to_numeric(transformed[series_id], errors="coerce")
+
+        if transform == "level":
+            if feature_name != series_id:
+                transformed[feature_name] = series
+            continue
+
+        if transform == "growth_3m_annualized":
+            transformed[feature_name] = compute_three_month_annualized_growth(series)
+            continue
+
+        if transform == "change_3m":
+            transformed[feature_name] = compute_three_month_change(series)
+            continue
+
+        if transform == "growth_3m":
+            transformed[feature_name] = compute_three_month_growth(series)
+            continue
+
+        if transform.startswith("drawdown_") and transform.endswith("m"):
+            window = int(transform.split("_")[1].replace("m", ""))
+            transformed[feature_name] = compute_drawdown(series, window=window)
+            continue
+
+        raise ValueError(f"Unsupported configured transform for {series_id}: {transform}")
+
+    return transformed

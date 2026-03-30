@@ -5,7 +5,7 @@
   <title>Recession Risk Monitoring Summary</title>
   <style>
     body { font-family: Georgia, 'Times New Roman', serif; margin: 24px auto 48px; max-width: 1260px; color: #1c1c1c; line-height: 1.5; background: linear-gradient(180deg, #f7f2e8 0%, #f0ece4 100%); }
-    h1, h2 { color: #1f2d3d; }
+    h1, h2, h3 { color: #1f2d3d; }
     .hero { background: #17324d; color: #f8f3e8; padding: 24px 28px; border-radius: 16px; margin-bottom: 24px; }
     .hero p { margin: 8px 0 0; color: #ddd4c5; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
@@ -22,259 +22,1104 @@
 <body>
   <section class="hero">
     <h1>U.S. Recession Odds Monitor</h1>
-    <p>Selected models provide a rules-based snapshot for now, 3M, 6M, and 12M recession risk using the best saved model per target in this repository.</p>
+    <p>Investor-facing snapshots are shown in both latest-available and realtime form, with quality-gated model selection and benchmark fallback when expanded models do not clear the governance thresholds.</p>
   </section>
   <h2>Current Snapshot</h2>
+  <h3>Latest Available</h3>
   <table border="1" class="dataframe summary-table">
   <thead>
     <tr style="text-align: right;">
+      <th>Mode</th>
       <th>Target</th>
       <th>Selected model</th>
       <th>As of</th>
       <th>Probability</th>
       <th>Historical percentile</th>
       <th>Regime</th>
+      <th>Quality gates</th>
+      <th>Selection note</th>
     </tr>
   </thead>
   <tbody>
     <tr>
+      <td>Latest available</td>
       <td>P(recession now)</td>
-      <td>HY Credit Logit</td>
-      <td>2026-03-01</td>
-      <td>0.0026</td>
-      <td>0.1082</td>
+      <td>Regularized Logit Current Recession</td>
+      <td>2026-01-01</td>
+      <td>0.0525</td>
+      <td>0.4292</td>
       <td>low risk</td>
+      <td>pass</td>
+      <td>Selected from eligible candidates</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 3 months)</td>
       <td>Multivariate Logit Within 3M</td>
-      <td>2026-02-01</td>
-      <td>0.0743</td>
-      <td>0.1042</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>0.4854</td>
       <td>low risk</td>
+      <td>fail</td>
+      <td>No benchmark candidate available; using best available model.</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 6 months)</td>
       <td>Multivariate Logit Within 6M</td>
-      <td>2026-02-01</td>
-      <td>0.1310</td>
-      <td>0.2500</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>0.5194</td>
       <td>low risk</td>
+      <td>fail</td>
+      <td>No benchmark candidate available; using best available model.</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 12 months)</td>
       <td>Yield Curve Logit</td>
       <td>2026-03-01</td>
       <td>0.1560</td>
       <td>0.7268</td>
       <td>rising risk</td>
+      <td>pass</td>
+      <td>No expanded model passed quality gates; falling back to benchmark.</td>
+    </tr>
+  </tbody>
+</table>
+  <h3>Realtime</h3>
+  <table border="1" class="dataframe summary-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Mode</th>
+      <th>Target</th>
+      <th>Selected model</th>
+      <th>As of</th>
+      <th>Probability</th>
+      <th>Historical percentile</th>
+      <th>Regime</th>
+      <th>Quality gates</th>
+      <th>Selection note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Ensemble Current Recession</td>
+      <td>2026-03-01</td>
+      <td>0.0255</td>
+      <td>0.3463</td>
+      <td>low risk</td>
+      <td>pass</td>
+      <td>Selected from eligible candidates</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 3 months)</td>
+      <td>Multivariate Logit Within 3M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>0.3981</td>
+      <td>low risk</td>
+      <td>fail</td>
+      <td>No benchmark candidate available; using best available model.</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 6 months)</td>
+      <td>Multivariate Logit Within 6M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>0.6303</td>
+      <td>low risk</td>
+      <td>fail</td>
+      <td>No benchmark candidate available; using best available model.</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Logit (Realtime)</td>
+      <td>2026-03-01</td>
+      <td>0.1977</td>
+      <td>0.7168</td>
+      <td>rising risk</td>
+      <td>pass</td>
+      <td>No expanded model passed quality gates; falling back to benchmark.</td>
+    </tr>
+  </tbody>
+</table>
+  <h3>Latest vs Realtime</h3>
+  <table border="1" class="dataframe metrics-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Target</th>
+      <th>Latest available model</th>
+      <th>Latest available as of</th>
+      <th>Latest available probability</th>
+      <th>Latest available regime</th>
+      <th>Latest available note</th>
+      <th>Realtime model</th>
+      <th>Realtime as of</th>
+      <th>Realtime probability</th>
+      <th>Realtime regime</th>
+      <th>Realtime note</th>
+      <th>Probability delta</th>
+      <th>Material gap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>P(recession now)</td>
+      <td>Regularized Logit Current Recession</td>
+      <td>2026-01-01</td>
+      <td>0.0525</td>
+      <td>low risk</td>
+      <td>Selected from eligible candidates</td>
+      <td>Ensemble Current Recession</td>
+      <td>2026-03-01</td>
+      <td>0.0255</td>
+      <td>low risk</td>
+      <td>Selected from eligible candidates</td>
+      <td>0.0270</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>P(recession within 3 months)</td>
+      <td>Multivariate Logit Within 3M</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>low risk</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>Multivariate Logit Within 3M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>low risk</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>0.0000</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>P(recession within 6 months)</td>
+      <td>Multivariate Logit Within 6M</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>low risk</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>Multivariate Logit Within 6M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>low risk</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>-0.0000</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Logit</td>
+      <td>2026-03-01</td>
+      <td>0.1560</td>
+      <td>rising risk</td>
+      <td>No expanded model passed quality gates; falling back to benchmark.</td>
+      <td>Yield Curve Logit (Realtime)</td>
+      <td>2026-03-01</td>
+      <td>0.1977</td>
+      <td>rising risk</td>
+      <td>No expanded model passed quality gates; falling back to benchmark.</td>
+      <td>-0.0417</td>
+      <td>False</td>
     </tr>
   </tbody>
 </table>
   <section class="grid">
-    <section class="card"><h2>Overall Regime</h2><p>rising risk (driven by P(recession within 12 months))</p></section>
-    <section class="card"><h2>Signal Drivers</h2><p>- The term spread is positive at 0.62, but the curve is steepening.<br>- HY spreads are relatively contained at 3.16, with the recent direction widening.<br>- Aggregate recession risk remains in the lower part of its configured range.<br>- Model disagreement is high; available models diverge materially.</p></section>
-    <section class="card"><h2>Model Disagreement</h2><p>Model disagreement is high; available models diverge materially.</p></section>
+    <section class="card"><h2>Latest Available Regime</h2><p>rising risk (driven by P(recession within 12 months))</p></section>
+    <section class="card"><h2>Realtime Regime</h2><p>rising risk (driven by P(recession within 12 months))</p></section>
+    <section class="card"><h2>Latest Available Signal Drivers</h2><p>- The term spread is positive at 0.62, but the curve is steepening.<br>- HY spreads are relatively contained at 3.16, with the recent direction widening.<br>- Aggregate recession risk remains in the lower part of its configured range.<br>- Model disagreement is moderate; direction is shared but conviction differs.<br>- Latest-available and realtime snapshots are broadly aligned.</p></section>
+    <section class="card"><h2>Realtime Signal Drivers</h2><p>- The term spread is positive at 0.52, but the curve is steepening.<br>- HY spreads are relatively contained at 2.92, with the recent direction widening.<br>- The Sahm gap is 0.33, below the trigger but no longer comfortably benign.<br>- Aggregate recession risk remains in the lower part of its configured range.<br>- Model disagreement is moderate; direction is shared but conviction differs.<br>- Latest-available and realtime snapshots are broadly aligned.</p></section>
+    <section class="card"><h2>Model Disagreement</h2><p>Model disagreement is moderate; direction is shared but conviction differs.</p></section>
     <section class="card"><h2>Portfolio Interpretation</h2><p>- Equities: lean toward quality and earnings resilience.<br>- Duration: some extra duration ballast becomes more useful.<br>- Credit beta: lower-quality spread exposure deserves more caution.<br>- Defensives / cash: optionality and liquidity buffers gain value.</p></section>
   </section>
-  <h2>Current Model Comparison</h2>
+  <h2>Snapshot Governance</h2>
   <table border="1" class="dataframe metrics-table">
   <thead>
     <tr style="text-align: right;">
+      <th>Mode</th>
+      <th>Target</th>
+      <th>Model</th>
+      <th>Model family</th>
+      <th>Selected</th>
+      <th>Selection status</th>
+      <th>Quality gates</th>
+      <th>Gate reasons</th>
+      <th>Fallback reason</th>
+      <th>AUC</th>
+      <th>ECE</th>
+      <th>Episode recall</th>
+      <th>Max false alarm streak</th>
+      <th>Probability</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>HY Credit Logit</td>
+      <td>Benchmark</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.9743</td>
+      <td>0.0324</td>
+      <td>0.50</td>
+      <td>1.0</td>
+      <td>0.0026</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>Regularized Logit Current Recession</td>
+      <td>Expanded logit</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.9507</td>
+      <td>0.0596</td>
+      <td>1.00</td>
+      <td>2.0</td>
+      <td>0.0525</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>Ensemble Current Recession</td>
+      <td>Ensemble</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.9498</td>
+      <td>0.0306</td>
+      <td>1.00</td>
+      <td>2.0</td>
+      <td>0.0263</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>Multivariate Logit Current Recession</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.8590</td>
+      <td>0.0663</td>
+      <td>1.00</td>
+      <td>2.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>Sahm Rule</td>
+      <td>Benchmark</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>max_false_alarm_streak&gt;12</td>
+      <td></td>
+      <td>0.9102</td>
+      <td>NaN</td>
+      <td>1.00</td>
+      <td>19.0</td>
+      <td>0.4667</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 3 months)</td>
+      <td>Multivariate Logit Within 3M</td>
+      <td>Expanded logit</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>0.8283</td>
+      <td>0.1170</td>
+      <td>0.00</td>
+      <td>14.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 3 months)</td>
+      <td>Regularized Logit Within 3M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>auc&lt;0.65; episode_recall&lt;0.50</td>
+      <td></td>
+      <td>0.5625</td>
+      <td>0.0073</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0326</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 6 months)</td>
+      <td>Multivariate Logit Within 6M</td>
+      <td>Expanded logit</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>0.7762</td>
+      <td>0.0680</td>
+      <td>0.00</td>
+      <td>2.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 6 months)</td>
+      <td>Regularized Logit Within 6M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td></td>
+      <td>0.7053</td>
+      <td>0.0349</td>
+      <td>0.00</td>
+      <td>1.0</td>
+      <td>0.0351</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Logit</td>
+      <td>Benchmark</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>pass</td>
+      <td></td>
+      <td>No expanded model passed quality gates; falling back to benchmark.</td>
+      <td>0.8561</td>
+      <td>0.0696</td>
+      <td>0.75</td>
+      <td>25.0</td>
+      <td>0.1560</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Inversion</td>
+      <td>Benchmark</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.8561</td>
+      <td>NaN</td>
+      <td>0.75</td>
+      <td>25.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 12 months)</td>
+      <td>Multivariate Logit Within 12M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50; ece&gt;0.15</td>
+      <td></td>
+      <td>0.8166</td>
+      <td>0.1880</td>
+      <td>0.00</td>
+      <td>6.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 12 months)</td>
+      <td>Regularized Logit Within 12M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td></td>
+      <td>0.7846</td>
+      <td>0.0905</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0768</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>HY Credit Logit (Realtime)</td>
+      <td>Benchmark</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.9149</td>
+      <td>0.0234</td>
+      <td>0.50</td>
+      <td>2.0</td>
+      <td>0.0053</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Ensemble Current Recession</td>
+      <td>Ensemble</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.8976</td>
+      <td>0.0389</td>
+      <td>1.00</td>
+      <td>5.0</td>
+      <td>0.0255</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Regularized Logit Current Recession</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.8322</td>
+      <td>0.0212</td>
+      <td>0.50</td>
+      <td>3.0</td>
+      <td>0.0510</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Multivariate Logit Current Recession</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.8201</td>
+      <td>0.1054</td>
+      <td>1.00</td>
+      <td>5.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Sahm Rule (Realtime)</td>
+      <td>Benchmark</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>max_false_alarm_streak&gt;12</td>
+      <td></td>
+      <td>0.8273</td>
+      <td>NaN</td>
+      <td>0.75</td>
+      <td>22.0</td>
+      <td>0.6667</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 3 months)</td>
+      <td>Multivariate Logit Within 3M</td>
+      <td>Expanded logit</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>0.7333</td>
+      <td>0.0438</td>
+      <td>0.00</td>
+      <td>3.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 3 months)</td>
+      <td>Regularized Logit Within 3M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>auc&lt;0.65; episode_recall&lt;0.50</td>
+      <td></td>
+      <td>0.5943</td>
+      <td>0.0098</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0332</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 6 months)</td>
+      <td>Multivariate Logit Within 6M</td>
+      <td>Expanded logit</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>No benchmark candidate available; using best available model.</td>
+      <td>0.7755</td>
+      <td>0.0834</td>
+      <td>0.00</td>
+      <td>4.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 6 months)</td>
+      <td>Regularized Logit Within 6M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td></td>
+      <td>0.7353</td>
+      <td>0.0174</td>
+      <td>0.00</td>
+      <td>1.0</td>
+      <td>0.0565</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Logit (Realtime)</td>
+      <td>Benchmark</td>
+      <td>True</td>
+      <td>selected</td>
+      <td>pass</td>
+      <td></td>
+      <td>No expanded model passed quality gates; falling back to benchmark.</td>
+      <td>0.8661</td>
+      <td>0.0781</td>
+      <td>0.75</td>
+      <td>24.0</td>
+      <td>0.1977</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Inversion (Realtime)</td>
+      <td>Benchmark</td>
+      <td>False</td>
+      <td>eligible_candidate</td>
+      <td>pass</td>
+      <td></td>
+      <td></td>
+      <td>0.8678</td>
+      <td>NaN</td>
+      <td>0.75</td>
+      <td>25.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Multivariate Logit Within 12M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50; ece&gt;0.15</td>
+      <td></td>
+      <td>0.8128</td>
+      <td>0.2032</td>
+      <td>0.00</td>
+      <td>17.0</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Regularized Logit Within 12M</td>
+      <td>Expanded logit</td>
+      <td>False</td>
+      <td>rejected</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td></td>
+      <td>0.7928</td>
+      <td>0.1115</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.1153</td>
+    </tr>
+  </tbody>
+</table>
+  <h2>Current Model Comparison</h2>
+  <h3>Latest Available</h3>
+  <table border="1" class="dataframe metrics-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Mode</th>
       <th>Target</th>
       <th>Model</th>
       <th>As of</th>
       <th>Probability</th>
       <th>Raw score</th>
+      <th>Calibrated score</th>
       <th>Historical percentile</th>
       <th>AUC</th>
       <th>Episode recall</th>
+      <th>Quality gates</th>
+      <th>Gate reasons</th>
       <th>Regime</th>
     </tr>
   </thead>
   <tbody>
     <tr>
+      <td>Latest available</td>
       <td>P(recession now)</td>
       <td>HY Credit Logit</td>
       <td>2026-03-01</td>
       <td>0.0026</td>
+      <td>NaN</td>
       <td>0.0026</td>
       <td>0.1082</td>
       <td>0.9743</td>
       <td>0.50</td>
+      <td>pass</td>
+      <td></td>
       <td>low risk</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession now)</td>
       <td>Regularized Logit Current Recession</td>
-      <td>2026-02-01</td>
-      <td>0.0446</td>
-      <td>0.0446</td>
-      <td>0.1498</td>
-      <td>0.9469</td>
-      <td>0.50</td>
+      <td>2026-01-01</td>
+      <td>0.0525</td>
+      <td>0.0525</td>
+      <td>0.0525</td>
+      <td>0.4292</td>
+      <td>0.9507</td>
+      <td>1.00</td>
+      <td>pass</td>
+      <td></td>
       <td>low risk</td>
     </tr>
     <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>Ensemble Current Recession</td>
+      <td>2026-01-01</td>
+      <td>0.0263</td>
+      <td>0.0263</td>
+      <td>0.0263</td>
+      <td>0.4292</td>
+      <td>0.9498</td>
+      <td>1.00</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession now)</td>
+      <td>Multivariate Logit Current Recession</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.7478</td>
+      <td>0.8590</td>
+      <td>1.00</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
       <td>P(recession now)</td>
       <td>Sahm Rule</td>
       <td>2026-02-01</td>
       <td>0.4667</td>
+      <td>NaN</td>
       <td>0.2333</td>
       <td>0.7216</td>
       <td>0.9102</td>
       <td>1.00</td>
+      <td>fail</td>
+      <td>max_false_alarm_streak&gt;12</td>
       <td>elevated risk</td>
     </tr>
     <tr>
-      <td>P(recession now)</td>
-      <td>Ensemble Current Recession</td>
-      <td>2026-02-01</td>
-      <td>0.0239</td>
-      <td>0.0239</td>
-      <td>0.1101</td>
-      <td>0.6539</td>
-      <td>1.00</td>
-      <td>low risk</td>
-    </tr>
-    <tr>
-      <td>P(recession now)</td>
-      <td>Multivariate Logit Current Recession</td>
-      <td>2026-02-01</td>
-      <td>0.0033</td>
-      <td>0.0033</td>
-      <td>0.4978</td>
-      <td>0.4459</td>
-      <td>1.00</td>
-      <td>low risk</td>
-    </tr>
-    <tr>
+      <td>Latest available</td>
       <td>P(recession within 3 months)</td>
       <td>Multivariate Logit Within 3M</td>
-      <td>2026-02-01</td>
-      <td>0.0743</td>
-      <td>0.0743</td>
-      <td>0.1042</td>
-      <td>0.7168</td>
-      <td>1.00</td>
-      <td>low risk</td>
-    </tr>
-    <tr>
-      <td>P(recession within 3 months)</td>
-      <td>Ensemble Within 3M</td>
-      <td>2026-02-01</td>
-      <td>0.0521</td>
-      <td>0.0521</td>
-      <td>0.1042</td>
-      <td>0.7168</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.4854</td>
+      <td>0.8283</td>
       <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
       <td>low risk</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 3 months)</td>
       <td>Regularized Logit Within 3M</td>
-      <td>2026-02-01</td>
-      <td>0.0299</td>
-      <td>0.0299</td>
-      <td>1.0000</td>
-      <td>0.5000</td>
+      <td>2026-01-01</td>
+      <td>0.0326</td>
+      <td>0.0326</td>
+      <td>0.0326</td>
+      <td>0.1262</td>
+      <td>0.5625</td>
       <td>0.00</td>
+      <td>fail</td>
+      <td>auc&lt;0.65; episode_recall&lt;0.50</td>
       <td>low risk</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 6 months)</td>
       <td>Multivariate Logit Within 6M</td>
-      <td>2026-02-01</td>
-      <td>0.1310</td>
-      <td>0.1310</td>
-      <td>0.2500</td>
-      <td>0.6259</td>
-      <td>1.00</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.5194</td>
+      <td>0.7762</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
       <td>low risk</td>
     </tr>
     <tr>
-      <td>P(recession within 6 months)</td>
-      <td>Ensemble Within 6M</td>
-      <td>2026-02-01</td>
-      <td>0.0999</td>
-      <td>0.0999</td>
-      <td>0.2500</td>
-      <td>0.6130</td>
-      <td>1.00</td>
-      <td>low risk</td>
-    </tr>
-    <tr>
+      <td>Latest available</td>
       <td>P(recession within 6 months)</td>
       <td>Regularized Logit Within 6M</td>
-      <td>2026-02-01</td>
-      <td>0.0688</td>
-      <td>0.0688</td>
-      <td>0.4792</td>
-      <td>0.5426</td>
+      <td>2026-01-01</td>
+      <td>0.0351</td>
+      <td>0.0351</td>
+      <td>0.0351</td>
+      <td>0.2670</td>
+      <td>0.7053</td>
       <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
       <td>low risk</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 12 months)</td>
       <td>Yield Curve Logit</td>
       <td>2026-03-01</td>
       <td>0.1560</td>
+      <td>NaN</td>
       <td>0.1560</td>
       <td>0.7268</td>
       <td>0.8561</td>
       <td>0.75</td>
+      <td>pass</td>
+      <td></td>
       <td>rising risk</td>
     </tr>
     <tr>
+      <td>Latest available</td>
       <td>P(recession within 12 months)</td>
       <td>Yield Curve Inversion</td>
       <td>2026-03-01</td>
       <td>0.0000</td>
+      <td>NaN</td>
       <td>-0.6153</td>
       <td>0.8897</td>
       <td>0.8561</td>
       <td>0.75</td>
+      <td>pass</td>
+      <td></td>
       <td>low risk</td>
     </tr>
     <tr>
-      <td>P(recession within 12 months)</td>
-      <td>Ensemble Within 12M</td>
-      <td>2026-02-01</td>
-      <td>0.5156</td>
-      <td>0.5156</td>
-      <td>0.2917</td>
-      <td>0.5893</td>
-      <td>1.00</td>
-      <td>elevated risk</td>
-    </tr>
-    <tr>
+      <td>Latest available</td>
       <td>P(recession within 12 months)</td>
       <td>Multivariate Logit Within 12M</td>
-      <td>2026-02-01</td>
-      <td>0.8543</td>
-      <td>0.8543</td>
-      <td>0.2708</td>
-      <td>0.5813</td>
+      <td>2026-01-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.6845</td>
+      <td>0.8166</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50; ece&gt;0.15</td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Latest available</td>
+      <td>P(recession within 12 months)</td>
+      <td>Regularized Logit Within 12M</td>
+      <td>2026-01-01</td>
+      <td>0.0768</td>
+      <td>0.0768</td>
+      <td>0.0768</td>
+      <td>0.5194</td>
+      <td>0.7846</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>low risk</td>
+    </tr>
+  </tbody>
+</table>
+  <h3>Realtime</h3>
+  <table border="1" class="dataframe metrics-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Mode</th>
+      <th>Target</th>
+      <th>Model</th>
+      <th>As of</th>
+      <th>Probability</th>
+      <th>Raw score</th>
+      <th>Calibrated score</th>
+      <th>Historical percentile</th>
+      <th>AUC</th>
+      <th>Episode recall</th>
+      <th>Quality gates</th>
+      <th>Gate reasons</th>
+      <th>Regime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>HY Credit Logit (Realtime)</td>
+      <td>2026-03-01</td>
+      <td>0.0053</td>
+      <td>NaN</td>
+      <td>0.0053</td>
+      <td>0.0779</td>
+      <td>0.9149</td>
+      <td>0.50</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Ensemble Current Recession</td>
+      <td>2026-03-01</td>
+      <td>0.0255</td>
+      <td>0.0255</td>
+      <td>0.0255</td>
+      <td>0.3463</td>
+      <td>0.8976</td>
       <td>1.00</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Regularized Logit Current Recession</td>
+      <td>2026-03-01</td>
+      <td>0.0510</td>
+      <td>0.0510</td>
+      <td>0.0510</td>
+      <td>0.3766</td>
+      <td>0.8322</td>
+      <td>0.50</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Multivariate Logit Current Recession</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.7186</td>
+      <td>0.8201</td>
+      <td>1.00</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession now)</td>
+      <td>Sahm Rule (Realtime)</td>
+      <td>2026-03-01</td>
+      <td>0.6667</td>
+      <td>NaN</td>
+      <td>0.3333</td>
+      <td>0.7701</td>
+      <td>0.8273</td>
+      <td>0.75</td>
+      <td>fail</td>
+      <td>max_false_alarm_streak&gt;12</td>
       <td>high / imminent risk</td>
     </tr>
     <tr>
+      <td>Realtime</td>
+      <td>P(recession within 3 months)</td>
+      <td>Multivariate Logit Within 3M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.3981</td>
+      <td>0.7333</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 3 months)</td>
+      <td>Regularized Logit Within 3M</td>
+      <td>2026-03-01</td>
+      <td>0.0332</td>
+      <td>0.0332</td>
+      <td>0.0332</td>
+      <td>0.1469</td>
+      <td>0.5943</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>auc&lt;0.65; episode_recall&lt;0.50</td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 6 months)</td>
+      <td>Multivariate Logit Within 6M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.6303</td>
+      <td>0.7755</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 6 months)</td>
+      <td>Regularized Logit Within 6M</td>
+      <td>2026-03-01</td>
+      <td>0.0565</td>
+      <td>0.0565</td>
+      <td>0.0565</td>
+      <td>0.4929</td>
+      <td>0.7353</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Logit (Realtime)</td>
+      <td>2026-03-01</td>
+      <td>0.1977</td>
+      <td>NaN</td>
+      <td>0.1977</td>
+      <td>0.7168</td>
+      <td>0.8661</td>
+      <td>0.75</td>
+      <td>pass</td>
+      <td></td>
+      <td>rising risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Yield Curve Inversion (Realtime)</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>NaN</td>
+      <td>-0.5242</td>
+      <td>0.8922</td>
+      <td>0.8678</td>
+      <td>0.75</td>
+      <td>pass</td>
+      <td></td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
+      <td>P(recession within 12 months)</td>
+      <td>Multivariate Logit Within 12M</td>
+      <td>2026-03-01</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0.6635</td>
+      <td>0.8128</td>
+      <td>0.00</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50; ece&gt;0.15</td>
+      <td>low risk</td>
+    </tr>
+    <tr>
+      <td>Realtime</td>
       <td>P(recession within 12 months)</td>
       <td>Regularized Logit Within 12M</td>
-      <td>2026-02-01</td>
-      <td>0.1768</td>
-      <td>0.1768</td>
-      <td>0.5729</td>
-      <td>0.5367</td>
+      <td>2026-03-01</td>
+      <td>0.1153</td>
+      <td>0.1153</td>
+      <td>0.1153</td>
+      <td>0.6303</td>
+      <td>0.7928</td>
       <td>0.00</td>
-      <td>rising risk</td>
+      <td>fail</td>
+      <td>episode_recall&lt;0.50</td>
+      <td>low risk</td>
     </tr>
   </tbody>
 </table>
   <h2>Investor-Facing Charts</h2>
-  <section class="chart-card"><h2>Selected Horizon History</h2><img src="../outputs/reports/charts/selected_probabilities.png" alt="Selected horizon history"></section>
-<section class="chart-card"><h2>Historical Percentile Context</h2><img src="../outputs/reports/charts/historical_percentiles.png" alt="Historical percentiles"></section>
-<section class="chart-card"><h2>Current Model Comparison</h2><img src="../outputs/reports/charts/current_model_comparison.png" alt="Current model comparison"></section>
+  <section class="chart-card"><h2>Latest Available Selected History</h2><img src="../outputs/reports/charts/selected_probabilities_latest_available.png" alt="Latest available selected history"></section>
+<section class="chart-card"><h2>Realtime Selected History</h2><img src="../outputs/reports/charts/selected_probabilities_realtime.png" alt="Realtime selected history"></section>
+<section class="chart-card"><h2>Latest Available Percentile Context</h2><img src="../outputs/reports/charts/historical_percentiles_latest_available.png" alt="Latest available percentiles"></section>
+<section class="chart-card"><h2>Realtime Percentile Context</h2><img src="../outputs/reports/charts/historical_percentiles_realtime.png" alt="Realtime percentiles"></section>
+<section class="chart-card"><h2>Latest Available Model Comparison</h2><img src="../outputs/reports/charts/current_model_comparison_latest_available.png" alt="Latest available model comparison"></section>
+<section class="chart-card"><h2>Realtime Model Comparison</h2><img src="../outputs/reports/charts/current_model_comparison_realtime.png" alt="Realtime model comparison"></section>
 <section class="chart-card"><h2>Episode Warning Timing</h2><img src="../outputs/reports/charts/episode_warning_timing.png" alt="Episode timing"></section>
   <h2>Baseline Metrics</h2>
   <table border="1" class="dataframe metrics-table">
@@ -399,11 +1244,11 @@
   </tbody>
 </table>
   <h2>Baseline Time-Series Charts</h2>
-  <section class="chart-card"><h2>Combined Time Series</h2><img src="html_assets/combined_timeseries.png" alt="Combined Time Series"></section>
+  <section class="chart-card"><h2>Combined Baseline Time Series</h2><img src="html_assets/combined_timeseries.png" alt="Combined Baseline Time Series"></section>
 <section class="chart-card"><h2>Yield Curve Logit</h2><img src="html_assets/yield_curve_logit_timeseries.png" alt="Yield Curve Logit"></section>
 <section class="chart-card"><h2>Yield Curve Inversion</h2><img src="html_assets/yield_curve_inversion_timeseries.png" alt="Yield Curve Inversion"></section>
 <section class="chart-card"><h2>HY Credit Logit</h2><img src="html_assets/hy_credit_logit_timeseries.png" alt="HY Credit Logit"></section>
 <section class="chart-card"><h2>Sahm Rule</h2><img src="html_assets/sahm_rule_timeseries.png" alt="Sahm Rule"></section>
-  <p class="note">Recession periods are shaded in gray on time-series charts. Historical percentiles are relative to each selected model's own archive.</p>
+  <p class="note">Recession periods are shaded in gray on time-series charts. Expanded-model probabilities are calibrated before investor-facing selection. Rule models remain threshold-based monitors.</p>
 </body>
 </html>

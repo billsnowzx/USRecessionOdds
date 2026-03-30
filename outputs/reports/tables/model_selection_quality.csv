@@ -1,0 +1,27 @@
+Mode,Target,Model,Model family,Selected,Selection status,Quality gates,Gate reasons,Fallback reason,AUC,ECE,Episode recall,Max false alarm streak,Probability
+Latest available,P(recession now),HY Credit Logit,Benchmark,False,eligible_candidate,pass,,,0.9742890995260663,0.0323641828030973,0.5,1.0,0.0025658614183918
+Latest available,P(recession now),Regularized Logit Current Recession,Expanded logit,True,selected,pass,,,0.9507281553398058,0.0595849678177445,1.0,2.0,0.0525190533838843
+Latest available,P(recession now),Ensemble Current Recession,Ensemble,False,eligible_candidate,pass,,,0.949757281553398,0.0305647147339333,1.0,2.0,0.0262595266919424
+Latest available,P(recession now),Multivariate Logit Current Recession,Expanded logit,False,eligible_candidate,pass,,,0.8589805825242719,0.0663061555407298,1.0,2.0,5.012088737177587e-16
+Latest available,P(recession now),Sahm Rule,Benchmark,False,rejected,fail,max_false_alarm_streak>12,,0.9102320675105484,,1.0,19.0,0.4666666666666668
+Latest available,P(recession within 3 months),Multivariate Logit Within 3M,Expanded logit,True,selected,fail,episode_recall<0.50,No benchmark candidate available; using best available model.,0.8283333333333334,0.1170018929693343,0.0,14.0,3.568450121588691e-17
+Latest available,P(recession within 3 months),Regularized Logit Within 3M,Expanded logit,False,rejected,fail,auc<0.65; episode_recall<0.50,,0.5625,0.0073287936770939,0.0,0.0,0.0326424122115533
+Latest available,P(recession within 6 months),Multivariate Logit Within 6M,Expanded logit,True,selected,fail,episode_recall<0.50,No benchmark candidate available; using best available model.,0.7762027491408935,0.0679601411027398,0.0,2.0,1.5699291701705936e-25
+Latest available,P(recession within 6 months),Regularized Logit Within 6M,Expanded logit,False,rejected,fail,episode_recall<0.50,,0.7053264604810997,0.0349206425168862,0.0,1.0,0.0351131170821138
+Latest available,P(recession within 12 months),Yield Curve Logit,Benchmark,True,selected,pass,,No expanded model passed quality gates; falling back to benchmark.,0.8560883198327672,0.0696033002270445,0.75,25.0,0.1559650873970698
+Latest available,P(recession within 12 months),Yield Curve Inversion,Benchmark,False,eligible_candidate,pass,,,0.8560883198327672,,0.75,25.0,0.0
+Latest available,P(recession within 12 months),Multivariate Logit Within 12M,Expanded logit,False,rejected,fail,episode_recall<0.50; ece>0.15,,0.8166208791208791,0.1879646538143472,0.0,6.0,4.614498761933528e-11
+Latest available,P(recession within 12 months),Regularized Logit Within 12M,Expanded logit,False,rejected,fail,episode_recall<0.50,,0.7845695970695971,0.0904569831919734,0.0,0.0,0.0767920943313483
+Realtime,P(recession now),HY Credit Logit (Realtime),Benchmark,False,eligible_candidate,pass,,,0.9149289099526068,0.0233740350153801,0.5,2.0,0.0052652073744474
+Realtime,P(recession now),Ensemble Current Recession,Ensemble,True,selected,pass,,,0.8976303317535546,0.0388539488823536,1.0,5.0,0.0255036488428525
+Realtime,P(recession now),Regularized Logit Current Recession,Expanded logit,False,eligible_candidate,pass,,,0.8322274881516588,0.0212215140110163,0.5,3.0,0.0510072976856867
+Realtime,P(recession now),Multivariate Logit Current Recession,Expanded logit,False,eligible_candidate,pass,,,0.8201421800947867,0.1053892439930861,1.0,5.0,1.8286253439580247e-14
+Realtime,P(recession now),Sahm Rule (Realtime),Benchmark,False,rejected,fail,max_false_alarm_streak>12,,0.8273113338902812,,0.75,22.0,0.6666666666666679
+Realtime,P(recession within 3 months),Multivariate Logit Within 3M,Expanded logit,True,selected,fail,episode_recall<0.50,No benchmark candidate available; using best available model.,0.7333333333333333,0.0438152287959071,0.0,3.0,1.4316305399115166e-24
+Realtime,P(recession within 3 months),Regularized Logit Within 3M,Expanded logit,False,rejected,fail,auc<0.65; episode_recall<0.50,,0.5943089430894309,0.0098273142985278,0.0,0.0,0.0332174491199678
+Realtime,P(recession within 6 months),Multivariate Logit Within 6M,Expanded logit,True,selected,fail,episode_recall<0.50,No benchmark candidate available; using best available model.,0.7755443886097152,0.083392973023249,0.0,4.0,6.853675772240292e-14
+Realtime,P(recession within 6 months),Regularized Logit Within 6M,Expanded logit,False,rejected,fail,episode_recall<0.50,,0.7353433835845896,0.0173804310278264,0.0,1.0,0.0565330829035545
+Realtime,P(recession within 12 months),Yield Curve Logit (Realtime),Benchmark,True,selected,pass,,No expanded model passed quality gates; falling back to benchmark.,0.8661484191272537,0.0780937762646015,0.75,24.0,0.1976729333203913
+Realtime,P(recession within 12 months),Yield Curve Inversion (Realtime),Benchmark,False,eligible_candidate,pass,,,0.8677815521296054,,0.75,25.0,0.0
+Realtime,P(recession within 12 months),Multivariate Logit Within 12M,Expanded logit,False,rejected,fail,episode_recall<0.50; ece>0.15,,0.8128342245989305,0.2032111718352939,0.0,17.0,1.0694196230396595e-13
+Realtime,P(recession within 12 months),Regularized Logit Within 12M,Expanded logit,False,rejected,fail,episode_recall<0.50,,0.7927807486631016,0.1114595440673151,0.0,0.0,0.1152874467836116

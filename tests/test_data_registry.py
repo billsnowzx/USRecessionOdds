@@ -22,7 +22,18 @@ def test_registry_drives_panel_without_series_block():
 
         panel = build_monthly_panel(config)
 
-        assert {"DGS10", "DTB3", "UNRATE", "BAMLH0A0HYM2", "term_spread", "sahm_gap"}.issubset(panel.columns)
+        assert {
+            "DGS10",
+            "DTB3",
+            "UNRATE",
+            "BAMLH0A0HYM2",
+            "PAYEMS_growth_3m_ann",
+            "AMTMNO_change_3m",
+            "US_OECD_CLI_growth_3m",
+            "equity_drawdown_6m",
+            "term_spread",
+            "sahm_gap",
+        }.issubset(panel.columns)
     finally:
         shutil.rmtree(base_dir, ignore_errors=True)
 
@@ -47,7 +58,7 @@ def test_ingest_and_panel_write_metadata_sidecars_without_network():
         assert raw_metadata["pull_timestamp_utc"]
         assert panel_metadata["data_mode"] == "latest_available"
         assert panel_metadata["series_registry_path"].endswith("series_registry.yaml")
-        assert len(panel_metadata["series"]) == 4
+        assert len(panel_metadata["series"]) == 8
     finally:
         shutil.rmtree(base_dir, ignore_errors=True)
 

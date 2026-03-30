@@ -30,6 +30,13 @@ def write_synthetic_raw_data(raw_dir: Path) -> None:
     daily_rows = []
     hy_rows = []
     unrate_rows = []
+    payems_rows = []
+    amtmno_rows = []
+    cli_rows = []
+    equity_rows = []
+    payems_level = 100.0
+    cli_level = 100.0
+    equity_level = 100.0
 
     for date in months:
         recession = is_recession_month(date)
@@ -40,21 +47,41 @@ def write_synthetic_raw_data(raw_dir: Path) -> None:
         dtb3 = 3.0 + 1.4 * forward_signal + 0.4 * recession
         hy = 3.0 + 3.5 * recession + 0.8 * forward_signal
         unrate = 4.2 + 0.6 * forward_signal + 1.6 * recession
+        payems_growth = 0.35 - 0.55 * recession - 0.20 * forward_signal
+        cli_growth = 0.25 - 0.40 * recession - 0.15 * forward_signal
+        equity_growth = 0.012 - 0.040 * recession - 0.010 * forward_signal
+        amtmno = 520.0 - 90.0 * recession - 45.0 * forward_signal
+
+        payems_level *= 1.0 + payems_growth / 100.0
+        cli_level *= 1.0 + cli_growth / 100.0
+        equity_level *= 1.0 + equity_growth
 
         daily_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(dgs10, 4)})
         hy_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(hy, 4)})
         daily_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(dtb3, 4), "series": "DTB3"})
         unrate_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(unrate, 4)})
+        payems_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(payems_level, 4)})
+        amtmno_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(amtmno, 4)})
+        cli_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(cli_level, 4)})
+        equity_rows.append({"DATE": date.strftime("%Y-%m-%d"), "VALUE": round(equity_level, 4)})
 
     dgs10 = pd.DataFrame([row for row in daily_rows if row.get("series") is None])[["DATE", "VALUE"]]
     dtb3 = pd.DataFrame([row for row in daily_rows if row.get("series") == "DTB3"])[["DATE", "VALUE"]]
     hy = pd.DataFrame(hy_rows)
     unrate = pd.DataFrame(unrate_rows)
+    payems = pd.DataFrame(payems_rows)
+    amtmno = pd.DataFrame(amtmno_rows)
+    cli = pd.DataFrame(cli_rows)
+    equity = pd.DataFrame(equity_rows)
 
     dgs10.to_csv(raw_dir / "DGS10.csv", index=False)
     dtb3.to_csv(raw_dir / "DTB3.csv", index=False)
     hy.to_csv(raw_dir / "BAMLH0A0HYM2.csv", index=False)
     unrate.to_csv(raw_dir / "UNRATE.csv", index=False)
+    payems.to_csv(raw_dir / "PAYEMS.csv", index=False)
+    amtmno.to_csv(raw_dir / "AMTMNO.csv", index=False)
+    cli.to_csv(raw_dir / "USALOLITOAASTSAM.csv", index=False)
+    equity.to_csv(raw_dir / "SPASTT01USM661N.csv", index=False)
 
 
 def write_reference_data(reference_dir: Path) -> None:
@@ -89,12 +116,12 @@ def write_test_config(base_dir: Path) -> Path:
             "multivariate": {
                 "enabled": True,
                 "targets": ["within_3m", "within_6m", "within_12m", "current_recession"],
-                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE"],
+                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE", "PAYEMS_growth_3m_ann", "AMTMNO_change_3m", "US_OECD_CLI_growth_3m", "equity_drawdown_6m"],
             },
             "regularized_logit": {
                 "enabled": True,
                 "targets": ["within_3m", "within_6m", "within_12m", "current_recession"],
-                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE"],
+                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE", "PAYEMS_growth_3m_ann", "AMTMNO_change_3m", "US_OECD_CLI_growth_3m", "equity_drawdown_6m"],
                 "penalty": "elasticnet",
                 "alpha": 0.1,
                 "l1_ratio": 0.5,
@@ -102,7 +129,7 @@ def write_test_config(base_dir: Path) -> Path:
             "tree_models": {
                 "enabled": False,
                 "targets": ["within_3m", "within_6m", "within_12m", "current_recession"],
-                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE"],
+                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE", "PAYEMS_growth_3m_ann", "AMTMNO_change_3m", "US_OECD_CLI_growth_3m", "equity_drawdown_6m"],
                 "n_estimators": 50,
                 "learning_rate": 0.05,
                 "max_depth": 2,
@@ -118,6 +145,10 @@ def write_test_config(base_dir: Path) -> Path:
             "DTB3": {"frequency": "daily"},
             "UNRATE": {"frequency": "monthly"},
             "BAMLH0A0HYM2": {"frequency": "daily"},
+            "PAYEMS": {"frequency": "monthly"},
+            "AMTMNO": {"frequency": "monthly"},
+            "USALOLITOAASTSAM": {"frequency": "monthly"},
+            "SPASTT01USM661N": {"frequency": "monthly"},
         },
         "aggregation": {"default": "mean", "options": ["mean", "eom"]},
         "horizons": [3, 6, 12],
@@ -125,17 +156,34 @@ def write_test_config(base_dir: Path) -> Path:
         "splits": {
             "yield_curve": {"train_end": "1989-12-01", "test_start": "1990-01-01"},
             "hy_credit": {"train_end": "2006-12-01", "test_start": "2007-01-01"},
+            "expanded_forecast": {"train_end": "1998-12-01", "test_start": "1999-01-01"},
+            "expanded_current": {"train_end": "2006-12-01", "test_start": "2007-01-01"},
             "sahm": {"test_start": "1990-01-01"},
         },
         "thresholds": {"inversion": 0.0, "sahm": 0.5, "probability": 0.5},
         "evaluation": {
             "thresholds": [0.15, 0.25, 0.35, 0.5],
             "event_windows_months": [3, 6, 12],
+            "calibration": {"enabled": True, "method": "platt", "validation_months": 24, "min_validation_months": 12},
+            "minimum_history": {"min_train_months": 12, "min_positive_cases": 2, "min_negative_cases": 12},
+            "selection_gates": {
+                "min_auc": 0.65,
+                "min_episode_recall": 0.5,
+                "max_ece": 0.15,
+                "max_false_alarm_streak": {
+                    "current_recession": 12,
+                    "within_3m": 18,
+                    "within_6m": 24,
+                    "within_12m": 36,
+                },
+            },
         },
         "reporting": {
             "include_current_snapshot": True,
             "include_event_scorecards": True,
             "include_portfolio_interpretation": True,
+            "snapshot_modes": ["latest_available", "realtime"],
+            "material_difference_threshold": 0.1,
             "regime_buckets": [
                 {"label": "low risk", "max_probability": 0.15},
                 {"label": "rising risk", "max_probability": 0.35},
@@ -187,6 +235,48 @@ def write_series_registry(path: Path) -> None:
             "frequency": "daily",
             "aggregation": "mean",
             "transform": "level",
+            "realtime_eligible": True,
+            "release_lag_months": 0,
+            "release_lag_days": 0,
+        },
+        "PAYEMS": {
+            "source": "FRED",
+            "vintage_source": "ALFRED",
+            "frequency": "monthly",
+            "aggregation": "last",
+            "transform": "growth_3m_annualized",
+            "feature_name": "PAYEMS_growth_3m_ann",
+            "realtime_eligible": True,
+            "release_lag_months": 1,
+            "release_lag_days": 5,
+        },
+        "AMTMNO": {
+            "source": "FRED",
+            "frequency": "monthly",
+            "aggregation": "last",
+            "transform": "change_3m",
+            "feature_name": "AMTMNO_change_3m",
+            "realtime_eligible": True,
+            "release_lag_months": 1,
+            "release_lag_days": 13,
+        },
+        "USALOLITOAASTSAM": {
+            "source": "FRED",
+            "vintage_source": "ALFRED",
+            "frequency": "monthly",
+            "aggregation": "last",
+            "transform": "growth_3m",
+            "feature_name": "US_OECD_CLI_growth_3m",
+            "realtime_eligible": True,
+            "release_lag_months": 1,
+            "release_lag_days": 14,
+        },
+        "SPASTT01USM661N": {
+            "source": "FRED",
+            "frequency": "monthly",
+            "aggregation": "last",
+            "transform": "drawdown_6m",
+            "feature_name": "equity_drawdown_6m",
             "realtime_eligible": True,
             "release_lag_months": 0,
             "release_lag_days": 0,

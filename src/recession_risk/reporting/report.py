@@ -15,7 +15,9 @@ from recession_risk.backtest.plots import (
     plot_series_with_recessions,
 )
 from recession_risk.ingest.nber import extract_recession_periods
+from recession_risk.pipeline import load_monthly_panel
 from recession_risk.reporting.snapshot import (
+    build_mode_comparison_table,
     build_portfolio_interpretation,
     build_signal_driver_summary,
     build_snapshot_tables,
@@ -72,19 +74,49 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
     tables_dir.mkdir(parents=True, exist_ok=True)
 
     recession_periods = extract_recession_periods(panel.set_index("date")["current_recession"].astype(int))
-    all_predictions, all_metrics = load_reporting_inputs(config, predictions, metrics)
-    snapshot, comparison = build_snapshot_tables(all_predictions, all_metrics, config)
+    modes = enabled_snapshot_modes(config)
+    realtime_panel = load_optional_panel(config, "realtime") if "realtime" in modes else pd.DataFrame()
+
+    latest_predictions, latest_metrics = load_reporting_inputs(config, predictions, metrics, data_mode="latest_available")
+    realtime_predictions, realtime_metrics = (
+        load_reporting_inputs(config, predictions, metrics, data_mode="realtime") if "realtime" in modes else (pd.DataFrame(), pd.DataFrame())
+    )
+
+    latest_snapshot, latest_comparison, latest_quality = build_snapshot_tables(latest_predictions, latest_metrics, config, "latest_available")
+    realtime_snapshot, realtime_comparison, realtime_quality = build_snapshot_tables(realtime_predictions, realtime_metrics, config, "realtime")
+    mode_comparison = build_mode_comparison_table(latest_snapshot, realtime_snapshot, config)
+    quality = pd.concat([latest_quality, realtime_quality], ignore_index=True, sort=False) if not latest_quality.empty or not realtime_quality.empty else pd.DataFrame()
     episode_summary = load_episode_summary(config)
     chart_paths = render_reporting_charts(
-        snapshot,
-        comparison,
-        all_predictions,
+        latest_snapshot,
+        latest_comparison,
+        latest_predictions,
+        realtime_snapshot,
+        realtime_comparison,
+        realtime_predictions,
         episode_summary,
         recession_periods,
         output_dirs,
     )
-    write_reporting_tables(snapshot, comparison, output_dirs)
-    write_supporting_markdown(snapshot, comparison, output_dirs)
+    write_reporting_tables(
+        latest_snapshot,
+        latest_comparison,
+        realtime_snapshot,
+        realtime_comparison,
+        mode_comparison,
+        quality,
+        output_dirs,
+    )
+    write_supporting_markdown(
+        latest_snapshot,
+        latest_comparison,
+        realtime_snapshot,
+        realtime_comparison,
+        mode_comparison,
+        quality,
+        chart_paths,
+        output_dirs,
+    )
 
     plot_series_with_recessions(
         panel.set_index("date")["term_spread"].dropna(),
@@ -108,31 +140,68 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
         )
     plot_roc_curves(predictions, figures_dir / "baseline_roc.png")
 
+    latest_signal_summary = build_signal_driver_summary(panel, latest_snapshot, latest_comparison, mode_comparison)
+    realtime_signal_summary = build_signal_driver_summary(realtime_panel, realtime_snapshot, realtime_comparison, mode_comparison) if not realtime_panel.empty else "Realtime signal summary unavailable."
+
     report = "\n".join(
         [
             "# Recession Risk Monitoring Report",
             "",
             "## Current Snapshot",
             "",
-            snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False) if not snapshot.empty else "No snapshot data available.",
+            "### Latest Available",
             "",
-            f"Overall regime: {snapshot_overall_regime(snapshot)}",
+            latest_snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False) if not latest_snapshot.empty else "No latest-available snapshot data available.",
+            "",
+            f"Overall regime: {snapshot_overall_regime(latest_snapshot)}",
+            "",
+            "### Realtime",
+            "",
+            realtime_snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False) if not realtime_snapshot.empty else "No realtime snapshot data available.",
+            "",
+            f"Overall realtime regime: {snapshot_overall_regime(realtime_snapshot)}",
+            "",
+            "### Latest vs Realtime",
+            "",
+            mode_comparison.round(4).to_markdown(index=False) if not mode_comparison.empty else "No mode comparison available.",
+            "",
+            "## Snapshot Governance",
+            "",
+            quality.round(4).to_markdown(index=False) if not quality.empty else "No model quality table available.",
             "",
             "## Signal Drivers",
             "",
-            build_signal_driver_summary(panel, snapshot, comparison),
+            "### Latest Available",
+            "",
+            latest_signal_summary,
+            "",
+            "### Realtime",
+            "",
+            realtime_signal_summary,
             "",
             "## Current Model Comparison",
             "",
-            comparison.round(4).to_markdown(index=False) if not comparison.empty else "No model comparison data available.",
+            "### Latest Available",
+            "",
+            latest_comparison.round(4).to_markdown(index=False) if not latest_comparison.empty else "No latest-available comparison data available.",
+            "",
+            "### Realtime",
+            "",
+            realtime_comparison.round(4).to_markdown(index=False) if not realtime_comparison.empty else "No realtime comparison data available.",
             "",
             "## Historical Comparison",
             "",
-            f"![Selected probabilities](../outputs/reports/charts/{chart_paths['selected_probabilities'].name})",
+            f"![Latest available selected probabilities](../outputs/reports/charts/{chart_paths['selected_probabilities_latest_available'].name})",
             "",
-            f"![Historical percentiles](../outputs/reports/charts/{chart_paths['historical_percentiles'].name})",
+            f"![Realtime selected probabilities](../outputs/reports/charts/{chart_paths['selected_probabilities_realtime'].name})",
             "",
-            f"![Current model comparison](../outputs/reports/charts/{chart_paths['current_model_comparison'].name})",
+            f"![Latest available percentiles](../outputs/reports/charts/{chart_paths['historical_percentiles_latest_available'].name})",
+            "",
+            f"![Realtime percentiles](../outputs/reports/charts/{chart_paths['historical_percentiles_realtime'].name})",
+            "",
+            f"![Latest available model comparison](../outputs/reports/charts/{chart_paths['current_model_comparison_latest_available'].name})",
+            "",
+            f"![Realtime model comparison](../outputs/reports/charts/{chart_paths['current_model_comparison_realtime'].name})",
             "",
             f"![Episode warning timing](../outputs/reports/charts/{chart_paths['episode_warning_timing'].name})",
             "",
@@ -152,14 +221,14 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
             "",
             "## Portfolio Interpretation",
             "",
-            build_portfolio_interpretation(snapshot, config) if config.get("reporting", {}).get("include_portfolio_interpretation", True) else "Portfolio interpretation disabled in config.",
+            build_portfolio_interpretation(latest_snapshot, config) if config.get("reporting", {}).get("include_portfolio_interpretation", True) else "Portfolio interpretation disabled in config.",
             "",
             "## Notes",
             "",
-            "- Daily financial series are aggregated to monthly frequency before modeling.",
-            "- The current snapshot prefers probability-scored models when multiple models exist for a target.",
-            "- Yield-curve models are evaluated on expansion months for forward recession labels.",
-            "- HY credit and Sahm rule are evaluated as recession-state detectors.",
+            "- Benchmarks remain the permanent reference layer and are retained even when expanded models are available.",
+            "- Expanded-model snapshots are quality-gated; if no expanded candidate passes, the report falls back to the best benchmark for that target.",
+            "- Latest-available and realtime views are reported separately to avoid presenting hindsight and as-of probabilities as the same object.",
+            "- Rule models remain uncalibrated signals; probability-scored expanded models use calibrated probabilities in investor-facing outputs.",
         ]
     )
     report_path = reports_dir / "recession_risk_report.md"
@@ -175,44 +244,71 @@ def render_html_summary(panel: pd.DataFrame, predictions: pd.DataFrame, metrics:
     assets_dir.mkdir(parents=True, exist_ok=True)
 
     recession_periods = extract_recession_periods(panel.set_index("date")["current_recession"].astype(int))
-    all_predictions, all_metrics = load_reporting_inputs(config, predictions, metrics)
-    snapshot, comparison = build_snapshot_tables(all_predictions, all_metrics, config)
+    modes = enabled_snapshot_modes(config)
+    realtime_panel = load_optional_panel(config, "realtime") if "realtime" in modes else pd.DataFrame()
+
+    latest_predictions, latest_metrics = load_reporting_inputs(config, predictions, metrics, data_mode="latest_available")
+    realtime_predictions, realtime_metrics = (
+        load_reporting_inputs(config, predictions, metrics, data_mode="realtime") if "realtime" in modes else (pd.DataFrame(), pd.DataFrame())
+    )
+
+    latest_snapshot, latest_comparison, latest_quality = build_snapshot_tables(latest_predictions, latest_metrics, config, "latest_available")
+    realtime_snapshot, realtime_comparison, realtime_quality = build_snapshot_tables(realtime_predictions, realtime_metrics, config, "realtime")
+    mode_comparison = build_mode_comparison_table(latest_snapshot, realtime_snapshot, config)
+    quality = pd.concat([latest_quality, realtime_quality], ignore_index=True, sort=False) if not latest_quality.empty or not realtime_quality.empty else pd.DataFrame()
     episode_summary = load_episode_summary(config)
-    phase5_charts = render_reporting_charts(
-        snapshot,
-        comparison,
-        all_predictions,
+    chart_paths = render_reporting_charts(
+        latest_snapshot,
+        latest_comparison,
+        latest_predictions,
+        realtime_snapshot,
+        realtime_comparison,
+        realtime_predictions,
         episode_summary,
         recession_periods,
         output_dirs,
     )
-    chart_paths: list[tuple[str, str]] = []
+    write_reporting_tables(
+        latest_snapshot,
+        latest_comparison,
+        realtime_snapshot,
+        realtime_comparison,
+        mode_comparison,
+        quality,
+        output_dirs,
+    )
 
     combined_path = plot_combined_summary_chart(predictions, recession_periods, assets_dir / "combined_timeseries.png")
-    chart_paths.append(("Combined Time Series", combined_path.name))
-
+    chart_paths_html: list[tuple[str, str]] = [("Combined Baseline Time Series", combined_path.name)]
     for model_name in metrics["model_name"]:
         frame = predictions[predictions["model_name"] == model_name].copy()
         if frame.empty:
             continue
         output_path = assets_dir / f"{model_name}_timeseries.png"
         plot_model_summary_chart(frame, metrics, recession_periods, output_path)
-        chart_paths.append((model_title(model_name), output_path.name))
+        chart_paths_html.append((model_title(model_name), output_path.name))
 
-    summary_table = snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_html(index=False, classes="summary-table")
-    comparison_table = comparison.round(4).to_html(index=False, classes="metrics-table") if not comparison.empty else "<p>No model comparison data available.</p>"
+    latest_table = latest_snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_html(index=False, classes="summary-table") if not latest_snapshot.empty else "<p>No latest-available snapshot data available.</p>"
+    realtime_table = realtime_snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_html(index=False, classes="summary-table") if not realtime_snapshot.empty else "<p>No realtime snapshot data available.</p>"
+    mode_table = mode_comparison.round(4).to_html(index=False, classes="metrics-table") if not mode_comparison.empty else "<p>No mode comparison available.</p>"
+    latest_comparison_table = latest_comparison.round(4).to_html(index=False, classes="metrics-table") if not latest_comparison.empty else "<p>No latest-available model comparison data available.</p>"
+    realtime_comparison_table = realtime_comparison.round(4).to_html(index=False, classes="metrics-table") if not realtime_comparison.empty else "<p>No realtime model comparison data available.</p>"
+    quality_table = quality.round(4).to_html(index=False, classes="metrics-table") if not quality.empty else "<p>No model quality table available.</p>"
     metrics_table = metrics.round(4).to_html(index=False, classes="metrics-table")
 
     charts_html = "\n".join(
         f"<section class=\"chart-card\"><h2>{title}</h2><img src=\"html_assets/{filename}\" alt=\"{title}\"></section>"
-        for title, filename in chart_paths
+        for title, filename in chart_paths_html
     )
-    phase5_html = "\n".join(
+    investor_html = "\n".join(
         [
-            f"<section class=\"chart-card\"><h2>Selected Horizon History</h2><img src=\"../outputs/reports/charts/{phase5_charts['selected_probabilities'].name}\" alt=\"Selected horizon history\"></section>",
-            f"<section class=\"chart-card\"><h2>Historical Percentile Context</h2><img src=\"../outputs/reports/charts/{phase5_charts['historical_percentiles'].name}\" alt=\"Historical percentiles\"></section>",
-            f"<section class=\"chart-card\"><h2>Current Model Comparison</h2><img src=\"../outputs/reports/charts/{phase5_charts['current_model_comparison'].name}\" alt=\"Current model comparison\"></section>",
-            f"<section class=\"chart-card\"><h2>Episode Warning Timing</h2><img src=\"../outputs/reports/charts/{phase5_charts['episode_warning_timing'].name}\" alt=\"Episode timing\"></section>",
+            f"<section class=\"chart-card\"><h2>Latest Available Selected History</h2><img src=\"../outputs/reports/charts/{chart_paths['selected_probabilities_latest_available'].name}\" alt=\"Latest available selected history\"></section>",
+            f"<section class=\"chart-card\"><h2>Realtime Selected History</h2><img src=\"../outputs/reports/charts/{chart_paths['selected_probabilities_realtime'].name}\" alt=\"Realtime selected history\"></section>",
+            f"<section class=\"chart-card\"><h2>Latest Available Percentile Context</h2><img src=\"../outputs/reports/charts/{chart_paths['historical_percentiles_latest_available'].name}\" alt=\"Latest available percentiles\"></section>",
+            f"<section class=\"chart-card\"><h2>Realtime Percentile Context</h2><img src=\"../outputs/reports/charts/{chart_paths['historical_percentiles_realtime'].name}\" alt=\"Realtime percentiles\"></section>",
+            f"<section class=\"chart-card\"><h2>Latest Available Model Comparison</h2><img src=\"../outputs/reports/charts/{chart_paths['current_model_comparison_latest_available'].name}\" alt=\"Latest available model comparison\"></section>",
+            f"<section class=\"chart-card\"><h2>Realtime Model Comparison</h2><img src=\"../outputs/reports/charts/{chart_paths['current_model_comparison_realtime'].name}\" alt=\"Realtime model comparison\"></section>",
+            f"<section class=\"chart-card\"><h2>Episode Warning Timing</h2><img src=\"../outputs/reports/charts/{chart_paths['episode_warning_timing'].name}\" alt=\"Episode timing\"></section>",
         ]
     )
 
@@ -223,7 +319,7 @@ def render_html_summary(panel: pd.DataFrame, predictions: pd.DataFrame, metrics:
   <title>Recession Risk Monitoring Summary</title>
   <style>
     body {{ font-family: Georgia, 'Times New Roman', serif; margin: 24px auto 48px; max-width: 1260px; color: #1c1c1c; line-height: 1.5; background: linear-gradient(180deg, #f7f2e8 0%, #f0ece4 100%); }}
-    h1, h2 {{ color: #1f2d3d; }}
+    h1, h2, h3 {{ color: #1f2d3d; }}
     .hero {{ background: #17324d; color: #f8f3e8; padding: 24px 28px; border-radius: 16px; margin-bottom: 24px; }}
     .hero p {{ margin: 8px 0 0; color: #ddd4c5; }}
     .grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }}
@@ -240,31 +336,55 @@ def render_html_summary(panel: pd.DataFrame, predictions: pd.DataFrame, metrics:
 <body>
   <section class=\"hero\">
     <h1>U.S. Recession Odds Monitor</h1>
-    <p>Selected models provide a rules-based snapshot for now, 3M, 6M, and 12M recession risk using the best saved model per target in this repository.</p>
+    <p>Investor-facing snapshots are shown in both latest-available and realtime form, with quality-gated model selection and benchmark fallback when expanded models do not clear the governance thresholds.</p>
   </section>
   <h2>Current Snapshot</h2>
-  {summary_table}
+  <h3>Latest Available</h3>
+  {latest_table}
+  <h3>Realtime</h3>
+  {realtime_table}
+  <h3>Latest vs Realtime</h3>
+  {mode_table}
   <section class=\"grid\">
-    <section class=\"card\"><h2>Overall Regime</h2><p>{snapshot_overall_regime(snapshot)}</p></section>
-    <section class=\"card\"><h2>Signal Drivers</h2><p>{build_signal_driver_summary(panel, snapshot, comparison).replace(chr(10), '<br>')}</p></section>
-    <section class=\"card\"><h2>Model Disagreement</h2><p>{model_disagreement_text(comparison)}</p></section>
-    <section class=\"card\"><h2>Portfolio Interpretation</h2><p>{build_portfolio_interpretation(snapshot, config).replace(chr(10), '<br>')}</p></section>
+    <section class=\"card\"><h2>Latest Available Regime</h2><p>{snapshot_overall_regime(latest_snapshot)}</p></section>
+    <section class=\"card\"><h2>Realtime Regime</h2><p>{snapshot_overall_regime(realtime_snapshot)}</p></section>
+    <section class=\"card\"><h2>Latest Available Signal Drivers</h2><p>{build_signal_driver_summary(panel, latest_snapshot, latest_comparison, mode_comparison).replace(chr(10), '<br>')}</p></section>
+    <section class=\"card\"><h2>Realtime Signal Drivers</h2><p>{build_signal_driver_summary(realtime_panel, realtime_snapshot, realtime_comparison, mode_comparison).replace(chr(10), '<br>') if not realtime_panel.empty else 'Realtime signal summary unavailable.'}</p></section>
+    <section class=\"card\"><h2>Model Disagreement</h2><p>{model_disagreement_text(latest_comparison)}</p></section>
+    <section class=\"card\"><h2>Portfolio Interpretation</h2><p>{build_portfolio_interpretation(latest_snapshot, config).replace(chr(10), '<br>')}</p></section>
   </section>
+  <h2>Snapshot Governance</h2>
+  {quality_table}
   <h2>Current Model Comparison</h2>
-  {comparison_table}
+  <h3>Latest Available</h3>
+  {latest_comparison_table}
+  <h3>Realtime</h3>
+  {realtime_comparison_table}
   <h2>Investor-Facing Charts</h2>
-  {phase5_html}
+  {investor_html}
   <h2>Baseline Metrics</h2>
   {metrics_table}
   <h2>Baseline Time-Series Charts</h2>
   {charts_html}
-  <p class=\"note\">Recession periods are shaded in gray on time-series charts. Historical percentiles are relative to each selected model's own archive.</p>
+  <p class=\"note\">Recession periods are shaded in gray on time-series charts. Expanded-model probabilities are calibrated before investor-facing selection. Rule models remain threshold-based monitors.</p>
 </body>
 </html>
 """
     output_path = reports_dir / "recession_risk_summary.html"
     output_path.write_text(html, encoding="utf-8")
     return output_path
+
+
+def load_optional_panel(config: dict, data_mode: str) -> pd.DataFrame:
+    try:
+        return load_monthly_panel(config, data_mode=data_mode)
+    except FileNotFoundError:
+        return pd.DataFrame()
+
+
+def enabled_snapshot_modes(config: dict) -> list[str]:
+    modes = config.get("reporting", {}).get("snapshot_modes", ["latest_available", "realtime"])
+    return [str(mode) for mode in modes]
 
 
 def plot_model_summary_chart(

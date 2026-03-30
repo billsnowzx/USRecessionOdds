@@ -10,6 +10,7 @@ from recession_risk.data.registry import list_series_ids, list_series_specs
 from recession_risk.features.labels import build_recession_start_series, build_within_h_label
 from recession_risk.features.transforms import (
     aggregate_to_monthly,
+    apply_configured_feature_transforms,
     combine_monthly_series,
     compute_sahm_gap,
     compute_term_spread,
@@ -56,6 +57,7 @@ def build_monthly_panel(
     recession = build_monthly_recession_series(chronology, panel["date"].min(), panel["date"].max())
 
     panel = panel.set_index("date").sort_index()
+    panel = apply_configured_feature_transforms(panel, series_specs)
     panel["current_recession"] = recession.reindex(panel.index, fill_value=0).astype("int64")
     panel["term_spread"] = compute_term_spread(panel)
     panel["sahm_gap"] = compute_sahm_gap(panel["UNRATE"])

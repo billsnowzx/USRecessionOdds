@@ -38,3 +38,49 @@ BAMLH0A0HYM2:
   realtime_eligible: true
   release_lag_months: 0
   release_lag_days: 0
+
+PAYEMS:
+  name: All Employees, Total Nonfarm
+  source: FRED
+  vintage_source: ALFRED
+  frequency: monthly
+  aggregation: last
+  transform: growth_3m_annualized
+  feature_name: PAYEMS_growth_3m_ann
+  realtime_eligible: true
+  release_lag_months: 1
+  release_lag_days: 5
+
+AMTMNO:
+  name: Manufacturers' New Orders
+  source: FRED
+  frequency: monthly
+  aggregation: last
+  transform: change_3m
+  feature_name: AMTMNO_change_3m
+  realtime_eligible: true
+  release_lag_months: 1
+  release_lag_days: 13
+
+USALOLITOAASTSAM:
+  name: OECD Composite Leading Indicator for the United States
+  source: FRED
+  vintage_source: ALFRED
+  frequency: monthly
+  aggregation: last
+  transform: growth_3m
+  feature_name: US_OECD_CLI_growth_3m
+  realtime_eligible: true
+  release_lag_months: 1
+  release_lag_days: 14
+
+SPASTT01USM661N:
+  name: OECD Total Share Prices for the United States
+  source: FRED
+  frequency: monthly
+  aggregation: last
+  transform: drawdown_6m
+  feature_name: equity_drawdown_6m
+  realtime_eligible: true
+  release_lag_months: 0
+  release_lag_days: 0

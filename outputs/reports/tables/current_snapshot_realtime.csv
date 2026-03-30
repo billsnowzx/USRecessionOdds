@@ -1,0 +1,5 @@
+Mode,Target,Selected model,As of,Probability,Historical percentile,Regime,Quality gates,Selection note
+Realtime,P(recession now),Ensemble Current Recession,2026-03-01,0.0255036488428525,0.3463203463203463,low risk,pass,Selected from eligible candidates
+Realtime,P(recession within 3 months),Multivariate Logit Within 3M,2026-03-01,1.4316305399115166e-24,0.3981042654028436,low risk,fail,No benchmark candidate available; using best available model.
+Realtime,P(recession within 6 months),Multivariate Logit Within 6M,2026-03-01,6.853675772240292e-14,0.6303317535545023,low risk,fail,No benchmark candidate available; using best available model.
+Realtime,P(recession within 12 months),Yield Curve Logit (Realtime),2026-03-01,0.1976729333203913,0.7167919799498746,rising risk,pass,No expanded model passed quality gates; falling back to benchmark.

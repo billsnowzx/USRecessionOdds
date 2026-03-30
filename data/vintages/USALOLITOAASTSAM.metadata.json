@@ -1,0 +1,15 @@
+{
+  "aggregation": "last",
+  "checksum_sha256": "98d216a1088adc2b8b3125733aecdb4ca8becd3f08cdd5a5b72b49a1cc96c48c",
+  "file_name": "USALOLITOAASTSAM.csv",
+  "frequency": "monthly",
+  "metadata_written_at_utc": "2026-03-30T15:36:49+00:00",
+  "pull_timestamp_utc": "2026-03-30T15:36:49+00:00",
+  "realtime_eligible": true,
+  "series_id": "USALOLITOAASTSAM",
+  "source": "FRED",
+  "source_kind": "vintage",
+  "source_url": "https://alfred.stlouisfed.org/graph/alfredgraph.csv?id=USALOLITOAASTSAM",
+  "transform": "growth_3m",
+  "vintage_source": "ALFRED"
+}

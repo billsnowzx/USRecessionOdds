@@ -1,0 +1,15 @@
+{
+  "aggregation": "last",
+  "checksum_sha256": "df484cf56ac07384301f58f0abf667f546343a01ee89afa402a6adcbd1e3f4bf",
+  "file_name": "PAYEMS.csv",
+  "frequency": "monthly",
+  "metadata_written_at_utc": "2026-03-30T15:36:49+00:00",
+  "pull_timestamp_utc": "2026-03-30T15:36:49+00:00",
+  "realtime_eligible": true,
+  "series_id": "PAYEMS",
+  "source": "FRED",
+  "source_kind": "raw",
+  "source_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PAYEMS",
+  "transform": "growth_3m_annualized",
+  "vintage_source": "ALFRED"
+}

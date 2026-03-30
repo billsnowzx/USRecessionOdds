@@ -2,7 +2,14 @@
 
 import pandas as pd
 
-from recession_risk.features.transforms import aggregate_to_monthly, compute_sahm_gap, compute_term_spread
+from recession_risk.features.transforms import (
+    aggregate_to_monthly,
+    compute_drawdown,
+    compute_sahm_gap,
+    compute_term_spread,
+    compute_three_month_annualized_growth,
+    compute_three_month_change,
+)
 
 
 def test_aggregate_to_monthly_mean():
@@ -27,4 +34,22 @@ def test_compute_sahm_gap_matches_hand_worked_example():
     unrate = pd.Series([4.0] * 12 + [4.2, 4.4, 4.6])
     sahm = compute_sahm_gap(unrate)
     assert round(float(sahm.iloc[-1]), 4) == 0.4
+
+
+def test_compute_three_month_annualized_growth():
+    levels = pd.Series([100.0, 101.0, 102.0, 103.0])
+    growth = compute_three_month_annualized_growth(levels)
+    assert round(float(growth.iloc[-1]), 4) == 12.5509
+
+
+def test_compute_three_month_change():
+    levels = pd.Series([50.0, 51.0, 52.0, 54.5])
+    change = compute_three_month_change(levels)
+    assert round(float(change.iloc[-1]), 4) == 4.5
+
+
+def test_compute_drawdown():
+    levels = pd.Series([100.0, 105.0, 103.0, 90.0, 95.0])
+    drawdown = compute_drawdown(levels, window=6)
+    assert round(float(drawdown.iloc[3]), 4) == 14.2857
 

@@ -28,6 +28,10 @@ models:
       - BAMLH0A0HYM2
       - sahm_gap
       - UNRATE
+      - PAYEMS_growth_3m_ann
+      - AMTMNO_change_3m
+      - US_OECD_CLI_growth_3m
+      - equity_drawdown_6m
   regularized_logit:
     enabled: true
     targets:
@@ -41,6 +45,10 @@ models:
       - BAMLH0A0HYM2
       - sahm_gap
       - UNRATE
+      - PAYEMS_growth_3m_ann
+      - AMTMNO_change_3m
+      - US_OECD_CLI_growth_3m
+      - equity_drawdown_6m
     penalty: elasticnet
     alpha: 0.1
     l1_ratio: 0.5
@@ -57,6 +65,10 @@ models:
       - BAMLH0A0HYM2
       - sahm_gap
       - UNRATE
+      - PAYEMS_growth_3m_ann
+      - AMTMNO_change_3m
+      - US_OECD_CLI_growth_3m
+      - equity_drawdown_6m
     n_estimators: 100
     learning_rate: 0.05
     max_depth: 2
@@ -78,6 +90,14 @@ series:
     frequency: monthly
   BAMLH0A0HYM2:
     frequency: daily
+  PAYEMS:
+    frequency: monthly
+  AMTMNO:
+    frequency: monthly
+  USALOLITOAASTSAM:
+    frequency: monthly
+  SPASTT01USM661N:
+    frequency: monthly
 
 aggregation:
   default: mean
@@ -98,6 +118,12 @@ splits:
   hy_credit:
     train_end: "2006-12-01"
     test_start: "2007-01-01"
+  expanded_forecast:
+    train_end: "2006-12-01"
+    test_start: "2007-01-01"
+  expanded_current:
+    train_end: "2006-12-01"
+    test_start: "2007-01-01"
   sahm:
     test_start: "1990-01-01"
 
@@ -116,11 +142,33 @@ evaluation:
     - 3
     - 6
     - 12
+  calibration:
+    enabled: true
+    method: platt
+    validation_months: 24
+    min_validation_months: 12
+  minimum_history:
+    min_train_months: 60
+    min_positive_cases: 2
+    min_negative_cases: 12
+  selection_gates:
+    min_auc: 0.65
+    min_episode_recall: 0.5
+    max_ece: 0.15
+    max_false_alarm_streak:
+      current_recession: 12
+      within_3m: 18
+      within_6m: 24
+      within_12m: 36
 
 reporting:
   include_current_snapshot: true
   include_event_scorecards: true
   include_portfolio_interpretation: true
+  snapshot_modes:
+    - latest_available
+    - realtime
+  material_difference_threshold: 0.1
   regime_buckets:
     - label: low risk
       max_probability: 0.15

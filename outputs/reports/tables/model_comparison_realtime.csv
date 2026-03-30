@@ -1,0 +1,14 @@
+Mode,Target,Model,As of,Probability,Raw score,Calibrated score,Historical percentile,AUC,Episode recall,Quality gates,Gate reasons,Regime
+Realtime,P(recession now),HY Credit Logit (Realtime),2026-03-01,0.0052652073744474,,0.0052652073744474,0.07792207792207792,0.9149289099526068,0.5,pass,,low risk
+Realtime,P(recession now),Ensemble Current Recession,2026-03-01,0.0255036488428525,0.0255036488428525,0.0255036488428525,0.3463203463203463,0.8976303317535546,1.0,pass,,low risk
+Realtime,P(recession now),Regularized Logit Current Recession,2026-03-01,0.0510072976856867,0.0510072976856867,0.0510072976856867,0.37662337662337664,0.8322274881516588,0.5,pass,,low risk
+Realtime,P(recession now),Multivariate Logit Current Recession,2026-03-01,1.8286253439580247e-14,1.8286253439580247e-14,1.8286253439580247e-14,0.7186147186147186,0.8201421800947867,1.0,pass,,low risk
+Realtime,P(recession now),Sahm Rule (Realtime),2026-03-01,0.6666666666666679,,0.3333333333333339,0.7701149425287356,0.8273113338902812,0.75,fail,max_false_alarm_streak>12,high / imminent risk
+Realtime,P(recession within 3 months),Multivariate Logit Within 3M,2026-03-01,1.4316305399115166e-24,1.4316305399115166e-24,1.4316305399115166e-24,0.3981042654028436,0.7333333333333333,0.0,fail,episode_recall<0.50,low risk
+Realtime,P(recession within 3 months),Regularized Logit Within 3M,2026-03-01,0.0332174491199678,0.0332174491199678,0.0332174491199678,0.14691943127962084,0.5943089430894309,0.0,fail,auc<0.65; episode_recall<0.50,low risk
+Realtime,P(recession within 6 months),Multivariate Logit Within 6M,2026-03-01,6.853675772240292e-14,6.853675772240292e-14,6.853675772240292e-14,0.6303317535545023,0.7755443886097152,0.0,fail,episode_recall<0.50,low risk
+Realtime,P(recession within 6 months),Regularized Logit Within 6M,2026-03-01,0.0565330829035545,0.0565330829035545,0.0565330829035545,0.4928909952606635,0.7353433835845896,0.0,fail,episode_recall<0.50,low risk
+Realtime,P(recession within 12 months),Yield Curve Logit (Realtime),2026-03-01,0.1976729333203913,,0.1976729333203913,0.7167919799498746,0.8661484191272537,0.75,pass,,rising risk
+Realtime,P(recession within 12 months),Yield Curve Inversion (Realtime),2026-03-01,0.0,,-0.5242105263157888,0.8922305764411027,0.8677815521296054,0.75,pass,,low risk
+Realtime,P(recession within 12 months),Multivariate Logit Within 12M,2026-03-01,1.0694196230396595e-13,1.0694196230396595e-13,1.0694196230396595e-13,0.6635071090047393,0.8128342245989305,0.0,fail,episode_recall<0.50; ece>0.15,low risk
+Realtime,P(recession within 12 months),Regularized Logit Within 12M,2026-03-01,0.1152874467836116,0.1152874467836116,0.1152874467836116,0.6303317535545023,0.7927807486631016,0.0,fail,episode_recall<0.50,low risk

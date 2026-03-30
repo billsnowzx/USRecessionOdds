@@ -8,7 +8,13 @@ from recession_risk.data.registry import get_series_spec, list_series_ids
 from recession_risk.data.release_calendar import get_available_date
 from recession_risk.data.vintages import get_series_asof, load_vintage_frame
 from recession_risk.features.labels import build_recession_start_series, build_within_h_label
-from recession_risk.features.transforms import aggregate_to_monthly, compute_sahm_gap, compute_term_spread, load_fred_csv
+from recession_risk.features.transforms import (
+    aggregate_to_monthly,
+    apply_configured_feature_transforms,
+    compute_sahm_gap,
+    compute_term_spread,
+    load_fred_csv,
+)
 from recession_risk.ingest.nber import build_monthly_recession_series, load_chronology
 
 
@@ -65,6 +71,10 @@ def build_realtime_monthly_panel(config: dict, aggregation: str | None = None) -
         rows.append(row)
 
     panel = pd.DataFrame(rows).set_index("date").sort_index()
+    panel = apply_configured_feature_transforms(
+        panel,
+        {series_id: get_series_spec(config, series_id) for series_id in series_ids},
+    )
     panel["current_recession"] = recession.reindex(panel.index, fill_value=0).astype("int64")
     panel["recession_start"] = build_recession_start_series(panel["current_recession"])
     for horizon in config["horizons"]:
