@@ -86,6 +86,21 @@ def write_test_config(base_dir: Path) -> Path:
             "release_lags": True,
             "estimation_window": "expanding",
         },
+        "models": {
+            "multivariate": {
+                "enabled": True,
+                "targets": ["within_3m", "within_6m", "within_12m", "current_recession"],
+                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE"],
+            },
+            "regularized_logit": {
+                "enabled": True,
+                "targets": ["within_3m", "within_6m", "within_12m", "current_recession"],
+                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE"],
+                "penalty": "elasticnet",
+                "alpha": 0.1,
+                "l1_ratio": 0.5,
+            },
+        },
         "series": {
             "DGS10": {"frequency": "daily"},
             "DTB3": {"frequency": "daily"},

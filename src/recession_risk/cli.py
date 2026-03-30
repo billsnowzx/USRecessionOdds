@@ -14,6 +14,7 @@ from recession_risk.config import load_config
 from recession_risk.ingest.fred import ingest_all_series
 from recession_risk.pipeline import build_monthly_panel, load_monthly_panel, save_monthly_panel
 from recession_risk.reporting.report import render_html_summary, render_report
+from recession_risk.backtest.expanded_runner import run_expanded_models, save_expanded_outputs
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("run-baselines", help="Run baseline backtests")
     subparsers.add_parser("run-robustness", help="Run robustness experiments")
     subparsers.add_parser("run-realtime-backtest", help="Run pseudo-real-time expanding-window backtests")
+    expanded_parser = subparsers.add_parser("run-expanded-models", help="Run multivariate and regularized logit models")
+    expanded_parser.add_argument("--data-mode", choices=["latest_available", "realtime"], help="Override configured data mode")
     subparsers.add_parser("render-report", help="Render the Markdown report")
     subparsers.add_parser("render-html-summary", help="Render the HTML time-series summary")
 
@@ -65,6 +68,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run-realtime-backtest":
         predictions, metrics = run_realtime_backtest(config)
         for path in save_realtime_outputs(predictions, metrics, config):
+            print(path)
+        return 0
+
+    if args.command == "run-expanded-models":
+        selected_mode = args.data_mode or config.get("data_mode", "latest_available")
+        panel = ensure_panel(config, data_mode=selected_mode)
+        predictions, metrics, summaries = run_expanded_models(panel, config, data_mode=selected_mode)
+        for path in save_expanded_outputs(predictions, metrics, summaries, config, data_mode=selected_mode):
             print(path)
         return 0
 

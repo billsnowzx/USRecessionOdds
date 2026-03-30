@@ -1,0 +1,9 @@
+model_name,target_name,horizon,split_name,test_start,auc,precision,recall,f1,false_positive_months,brier_score,ece,event_hit_rate,median_timing_months,event_hits,n_events
+multivariate_logit_within_3m,within_3m,3,expanded_dynamic_holdout,2017-10-01,0.7168458781362007,0.06,1.0,0.11320754716981131,47,0.33820213334496385,0.4542931928537035,1.0,3.0,1,1
+multivariate_logit_within_6m,within_6m,6,expanded_dynamic_holdout,2017-10-01,0.6259259259259259,0.10714285714285714,1.0,0.19354838709677416,50,0.4312697386479975,0.5102149090613818,1.0,6.0,1,1
+multivariate_logit_within_12m,within_12m,12,expanded_dynamic_holdout,2017-10-01,0.5813492063492064,0.15384615384615385,1.0,0.2666666666666667,66,0.6338005791508557,0.6810515912345161,1.0,12.0,1,1
+multivariate_logit_current_recession,current_recession,0,expanded_holdout,2007-01-01,0.4458937198067633,0.056818181818181816,0.25,0.09259259259259259,83,0.4260853356772943,0.426250310117413,1.0,0.5,2,2
+regularized_logit_within_3m,within_3m,3,expanded_dynamic_holdout,2017-10-01,0.5,0.0,0.0,0.0,0,0.030275168235050155,0.0013155740382590209,0.0,,0,1
+regularized_logit_within_6m,within_6m,6,expanded_dynamic_holdout,2017-10-01,0.5425925925925926,0.0,0.0,0.0,0,0.058826483114321405,0.008130709899527203,0.0,,0,1
+regularized_logit_within_12m,within_12m,12,expanded_dynamic_holdout,2017-10-01,0.5367063492063492,0.0,0.0,0.0,0,0.1301344409221936,0.19899193102503296,0.0,,0,1
+regularized_logit_current_recession,current_recession,0,expanded_holdout,2007-01-01,0.9468599033816425,0.6,0.3,0.4,4,0.06082275510054048,0.05332557305200787,0.5,11.0,1,2

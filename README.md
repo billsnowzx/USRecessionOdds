@@ -43,6 +43,8 @@ recession-risk render-report
 recession-risk ingest --include-vintages
 recession-risk build-panel --data-mode realtime
 recession-risk run-realtime-backtest
+recession-risk run-expanded-models
+recession-risk run-expanded-models --data-mode realtime
 ```
 
 If you do not install the package, run with `PYTHONPATH=src` and `python -m recession_risk.cli ...`.
@@ -60,6 +62,9 @@ If you do not install the package, run with `PYTHONPATH=src` and `python -m rece
 - `data/processed/monthly_panel_realtime.csv` and `.parquet`
 - `outputs/backtests/realtime_predictions.csv`
 - `outputs/backtests/realtime_metrics.csv`
+- `outputs/backtests/expanded_predictions*.csv`
+- `outputs/backtests/expanded_metrics*.csv`
+- `outputs/backtests/expanded_model_summary*.csv`
 
 ## Realtime mode
 
@@ -68,3 +73,12 @@ Realtime mode builds an as-of monthly panel that respects configured release lag
 - Default mode remains `latest_available`.
 - Realtime mode is enabled with `--data-mode realtime` or by setting `data_mode: realtime` in config.
 - `ingest --include-vintages` downloads the ALFRED files needed by realtime-eligible macro series.
+
+## Expanded models
+
+Phase 2 adds config-driven benchmark-adjacent models:
+
+- multivariate logistic regression
+- regularized logistic regression
+
+They are run through `run-expanded-models` and produce separate archived outputs for latest-available and realtime panel modes.
