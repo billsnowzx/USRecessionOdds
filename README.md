@@ -49,6 +49,22 @@ recession-risk run-expanded-models --data-mode realtime
 
 If you do not install the package, run with `PYTHONPATH=src` and `python -m recession_risk.cli ...`.
 
+## Development
+
+Install dev tooling with:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Common checks:
+
+```bash
+python -m ruff check .
+python -m mypy src
+python -m pytest -q
+```
+
 ## Output artifacts
 
 - `data/raw/*.csv`: cached FRED downloads
@@ -111,3 +127,10 @@ Phase 5 adds investor-facing outputs while preserving the original report entryp
 - deterministic signal-driver and model-disagreement summaries
 - historical percentile and episode-warning comparison charts
 - scenario-oriented portfolio interpretation text
+
+Additional project docs:
+
+- `docs/data_dictionary.md`
+- `docs/modeling_notes.md`
+- `CHANGELOG.md`
+- `examples/recession_monitoring_walkthrough.ipynb`

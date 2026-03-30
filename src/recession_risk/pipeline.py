@@ -5,8 +5,8 @@ from pathlib import Path
 import pandas as pd
 
 from recession_risk.data.cache_metadata import file_sha256, utc_now_iso, write_metadata
-from recession_risk.data.registry import list_series_ids, list_series_specs
 from recession_risk.data.realtime_panel import build_realtime_monthly_panel
+from recession_risk.data.registry import list_series_ids, list_series_specs
 from recession_risk.features.labels import build_recession_start_series, build_within_h_label
 from recession_risk.features.transforms import (
     aggregate_to_monthly,

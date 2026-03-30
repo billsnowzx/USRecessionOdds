@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 DATE_COLUMNS = ["DATE", "observation_date"]
 VALUE_COLUMNS = ["VALUE"]
 

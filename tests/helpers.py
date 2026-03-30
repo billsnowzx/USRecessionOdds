@@ -5,7 +5,6 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-
 RECESSION_WINDOWS = [
     (pd.Timestamp("1990-08-01"), pd.Timestamp("1991-03-01")),
     (pd.Timestamp("2001-04-01"), pd.Timestamp("2001-11-01")),

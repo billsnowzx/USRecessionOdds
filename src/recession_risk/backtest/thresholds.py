@@ -30,7 +30,7 @@ def build_threshold_analysis(
                 probability_model=True,
             )
             row["threshold"] = float(threshold)
-            rows.append(row)
+            rows.append(dict(row))
 
     return pd.DataFrame(rows)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,7 +22,6 @@ from recession_risk.reporting.snapshot import (
     ensure_output_report_dirs,
     load_episode_summary,
     load_reporting_inputs,
-    model_color,
     model_disagreement_text,
     model_title,
     render_reporting_charts,
@@ -29,7 +29,6 @@ from recession_risk.reporting.snapshot import (
     write_reporting_tables,
     write_supporting_markdown,
 )
-
 
 MODEL_SPECS = {
     "yield_curve_logit": {
@@ -287,12 +286,13 @@ def plot_model_summary_chart(
         ax.set_ylim(-0.05, 1.05)
     else:
         ax.plot(frame["date"], plot_values, linewidth=2, color=spec["color"])
-        if spec["threshold"] is not None:
-            ax.axhline(spec["threshold"], linestyle="--", color="#444444", alpha=0.7)
+        threshold = spec["threshold"]
+        if isinstance(threshold, (int, float)):
+            ax.axhline(float(threshold), linestyle="--", color="#444444", alpha=0.7)
     for start, end in recession_periods:
         ax.axvspan(start, end + pd.offsets.MonthEnd(0), color="#d9d9d9", alpha=0.45)
-    ax.set_title(spec["title"])
-    ax.set_ylabel(spec["ylabel"])
+    ax.set_title(str(spec["title"]))
+    ax.set_ylabel(str(spec["ylabel"]))
     ax.grid(alpha=0.2)
     ax.text(
         0.99,

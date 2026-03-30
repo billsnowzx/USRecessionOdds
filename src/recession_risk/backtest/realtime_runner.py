@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from recession_risk.backtest.event_metrics import write_evaluation_outputs
@@ -102,7 +103,8 @@ def run_realtime_logit(
         if train.empty or train[target_name].nunique() < 2:
             continue
         model = SimpleLogisticRegression().fit(train[feature_column].to_numpy(), train[target_name].to_numpy())
-        score = float(model.predict_proba([row[feature_column]])[:, 1][0])
+        feature_array = np.asarray([row[feature_column]], dtype=float)
+        score = float(model.predict_proba(feature_array)[:, 1][0])
         rows.append(
             {
                 "date": row["date"],

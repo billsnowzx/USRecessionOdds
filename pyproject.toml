@@ -17,6 +17,13 @@ dependencies = [
   "scipy>=1.12",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.11",
+  "ruff>=0.6",
+  "types-PyYAML>=6.0",
+]
+
 [project.scripts]
 recession-risk = "recession_risk.cli:main"
 
@@ -29,4 +36,29 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = [
+  "data",
+  "outputs",
+  "reports",
+  "test_runs",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["recession_risk"]
+mypy_path = ["src"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+exclude = "(^data/|^outputs/|^reports/|^test_runs/)"
+disable_error_code = ["import-untyped"]
 

@@ -4,8 +4,7 @@ from pathlib import Path
 from urllib.request import urlopen
 
 from recession_risk.data.cache_metadata import file_sha256, utc_now_iso, write_metadata
-from recession_risk.data.registry import get_series_spec
-from recession_risk.data.registry import list_series_ids
+from recession_risk.data.registry import get_series_spec, list_series_ids
 from recession_risk.data.vintages import download_alfred_series
 
 FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"

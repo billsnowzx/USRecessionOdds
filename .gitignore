@@ -3,3 +3,7 @@ pytest-cache-files-*/
 test_runs/
 __pycache__/
 *.pyc
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/

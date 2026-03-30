@@ -4,7 +4,7 @@ import math
 
 import pandas as pd
 
-from recession_risk.backtest.event_metrics import build_event_scorecard, build_episode_summary, summarize_event_metrics
+from recession_risk.backtest.event_metrics import build_episode_summary, build_event_scorecard, summarize_event_metrics
 from recession_risk.backtest.thresholds import build_threshold_analysis
 
 
