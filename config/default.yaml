@@ -1,0 +1,42 @@
+paths:
+  raw_data: data/raw
+  processed_data: data/processed
+  reference_data: data/reference
+  reports: reports
+
+series:
+  DGS10:
+    frequency: daily
+  DTB3:
+    frequency: daily
+  UNRATE:
+    frequency: monthly
+  BAMLH0A0HYM2:
+    frequency: daily
+
+aggregation:
+  default: mean
+  options:
+    - mean
+    - eom
+
+horizons:
+  - 3
+  - 6
+  - 12
+primary_horizon: 12
+
+splits:
+  yield_curve:
+    train_end: "1989-12-01"
+    test_start: "1990-01-01"
+  hy_credit:
+    train_end: "2006-12-01"
+    test_start: "2007-01-01"
+  sahm:
+    test_start: "1990-01-01"
+
+thresholds:
+  inversion: 0.0
+  sahm: 0.5
+  probability: 0.5

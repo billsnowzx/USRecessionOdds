@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Recession Risk Time-Series Summary</title>
+  <style>
+    body { font-family: Georgia, 'Times New Roman', serif; margin: 32px auto; max-width: 1200px; color: #1c1c1c; line-height: 1.5; background: #f7f4ef; }
+    h1, h2 { color: #1f2d3d; }
+    .meta { margin-bottom: 24px; color: #4f5b66; }
+    .summary-table, .metrics-table { border-collapse: collapse; width: 100%; margin: 16px 0 32px; background: white; }
+    .summary-table th, .summary-table td, .metrics-table th, .metrics-table td { border: 1px solid #d8d2c8; padding: 8px 10px; text-align: left; }
+    .summary-table th, .metrics-table th { background: #ebe4d8; }
+    .chart-card { background: white; padding: 18px; margin: 0 0 24px; border: 1px solid #d8d2c8; box-shadow: 0 3px 10px rgba(0,0,0,0.04); }
+    img { width: 100%; height: auto; display: block; }
+    .note { color: #5f6b76; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <h1>Recession Risk Time-Series Summary</h1>
+  <p class="meta">Generated from the baseline backtest outputs in this repository. The combined chart normalizes heterogeneous model outputs onto a comparable 0-1 view: probabilistic models use raw probability, the inversion rule uses the binary alarm, and the Sahm rule uses threshold-normalized gap capped at 1.</p>
+  <h2>Snapshot Summary</h2>
+  <table border="1" class="dataframe summary-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Model</th>
+      <th>Latest date</th>
+      <th>Latest score</th>
+      <th>Latest signal</th>
+      <th>AUC</th>
+      <th>Precision</th>
+      <th>Recall</th>
+      <th>Event hit rate</th>
+      <th>Median timing (months)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield-Curve Logit</td>
+      <td>2026-03-01</td>
+      <td>0.1560</td>
+      <td>False</td>
+      <td>0.8561</td>
+      <td>0.3023</td>
+      <td>0.3023</td>
+      <td>0.75</td>
+      <td>9.0</td>
+    </tr>
+    <tr>
+      <td>Yield-Curve Inversion Rule</td>
+      <td>2026-03-01</td>
+      <td>-0.6153</td>
+      <td>False</td>
+      <td>0.8561</td>
+      <td>0.3182</td>
+      <td>0.3256</td>
+      <td>0.75</td>
+      <td>9.0</td>
+    </tr>
+    <tr>
+      <td>HY Credit Logit</td>
+      <td>2026-03-01</td>
+      <td>0.0026</td>
+      <td>False</td>
+      <td>0.9743</td>
+      <td>0.9000</td>
+      <td>0.4500</td>
+      <td>0.50</td>
+      <td>9.0</td>
+    </tr>
+    <tr>
+      <td>Sahm Rule</td>
+      <td>2026-02-01</td>
+      <td>0.2333</td>
+      <td>False</td>
+      <td>0.9102</td>
+      <td>0.3614</td>
+      <td>0.8333</td>
+      <td>1.00</td>
+      <td>1.5</td>
+    </tr>
+  </tbody>
+</table>
+  <h2>Baseline Metrics</h2>
+  <table border="1" class="dataframe metrics-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>model_name</th>
+      <th>target_name</th>
+      <th>horizon</th>
+      <th>split_name</th>
+      <th>test_start</th>
+      <th>auc</th>
+      <th>precision</th>
+      <th>recall</th>
+      <th>f1</th>
+      <th>false_positive_months</th>
+      <th>brier_score</th>
+      <th>ece</th>
+      <th>event_hit_rate</th>
+      <th>median_timing_months</th>
+      <th>event_hits</th>
+      <th>n_events</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>yield_curve_logit</td>
+      <td>within_12m</td>
+      <td>12</td>
+      <td>fixed_1990_holdout</td>
+      <td>1990-01-01</td>
+      <td>0.8561</td>
+      <td>0.3023</td>
+      <td>0.3023</td>
+      <td>0.3023</td>
+      <td>30</td>
+      <td>0.1128</td>
+      <td>0.0696</td>
+      <td>0.75</td>
+      <td>9.0</td>
+      <td>3</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>yield_curve_inversion</td>
+      <td>within_12m</td>
+      <td>12</td>
+      <td>fixed_1990_holdout</td>
+      <td>1990-01-01</td>
+      <td>0.8561</td>
+      <td>0.3182</td>
+      <td>0.3256</td>
+      <td>0.3218</td>
+      <td>30</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.75</td>
+      <td>9.0</td>
+      <td>3</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>hy_credit_logit</td>
+      <td>current_recession</td>
+      <td>0</td>
+      <td>fixed_2007_holdout</td>
+      <td>2007-01-01</td>
+      <td>0.9743</td>
+      <td>0.9000</td>
+      <td>0.4500</td>
+      <td>0.6000</td>
+      <td>1</td>
+      <td>0.0396</td>
+      <td>0.0324</td>
+      <td>0.50</td>
+      <td>9.0</td>
+      <td>1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>sahm_rule</td>
+      <td>current_recession</td>
+      <td>0</td>
+      <td>post_1990_monitoring</td>
+      <td>1990-01-01</td>
+      <td>0.9102</td>
+      <td>0.3614</td>
+      <td>0.8333</td>
+      <td>0.5042</td>
+      <td>53</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.00</td>
+      <td>1.5</td>
+      <td>4</td>
+      <td>4</td>
+    </tr>
+  </tbody>
+</table>
+  <section class="chart-card"><h2>Combined Time Series</h2><img src="html_assets/combined_timeseries.png" alt="Combined Time Series"></section>
+<section class="chart-card"><h2>Yield-Curve Logit</h2><img src="html_assets/yield_curve_logit_timeseries.png" alt="Yield-Curve Logit"></section>
+<section class="chart-card"><h2>Yield-Curve Inversion Rule</h2><img src="html_assets/yield_curve_inversion_timeseries.png" alt="Yield-Curve Inversion Rule"></section>
+<section class="chart-card"><h2>HY Credit Logit</h2><img src="html_assets/hy_credit_logit_timeseries.png" alt="HY Credit Logit"></section>
+<section class="chart-card"><h2>Sahm Rule</h2><img src="html_assets/sahm_rule_timeseries.png" alt="Sahm Rule"></section>
+  <p class="note">Recession periods are shaded in gray on all charts.</p>
+</body>
+</html>
