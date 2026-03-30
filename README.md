@@ -40,6 +40,9 @@ recession-risk build-panel
 recession-risk run-baselines
 recession-risk run-robustness
 recession-risk render-report
+recession-risk ingest --include-vintages
+recession-risk build-panel --data-mode realtime
+recession-risk run-realtime-backtest
 ```
 
 If you do not install the package, run with `PYTHONPATH=src` and `python -m recession_risk.cli ...`.
@@ -53,3 +56,15 @@ If you do not install the package, run with `PYTHONPATH=src` and `python -m rece
 - `reports/tables/robustness_metrics.csv`
 - `reports/figures/*.png`
 - `reports/recession_risk_report.md`
+- `data/vintages/*.csv`: cached ALFRED vintage downloads for realtime-eligible series
+- `data/processed/monthly_panel_realtime.csv` and `.parquet`
+- `outputs/backtests/realtime_predictions.csv`
+- `outputs/backtests/realtime_metrics.csv`
+
+## Realtime mode
+
+Realtime mode builds an as-of monthly panel that respects configured release lags and uses vintage data when a cached ALFRED history is available.
+
+- Default mode remains `latest_available`.
+- Realtime mode is enabled with `--data-mode realtime` or by setting `data_mode: realtime` in config.
+- `ingest --include-vintages` downloads the ALFRED files needed by realtime-eligible macro series.

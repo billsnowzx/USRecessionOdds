@@ -20,6 +20,8 @@ def load_config(path: str | Path) -> dict[str, Any]:
         name: resolve_path(base_dir, value)
         for name, value in config.get("paths", {}).items()
     }
+    if "series_registry_path" in config:
+        merged["series_registry_path"] = resolve_path(base_dir, config["series_registry_path"])
     return merged
 
 

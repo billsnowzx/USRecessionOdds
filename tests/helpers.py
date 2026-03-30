@@ -73,9 +73,18 @@ def write_test_config(base_dir: Path) -> Path:
     config = {
         "paths": {
             "raw_data": str((base_dir / "data" / "raw").as_posix()),
+            "vintage_data": str((base_dir / "data" / "vintages").as_posix()),
             "processed_data": str((base_dir / "data" / "processed").as_posix()),
             "reference_data": str((base_dir / "data" / "reference").as_posix()),
             "reports": str((base_dir / "reports").as_posix()),
+            "outputs": str((base_dir / "outputs").as_posix()),
+        },
+        "data_mode": "latest_available",
+        "series_registry_path": str((base_dir / "config" / "series_registry.yaml").as_posix()),
+        "realtime": {
+            "use_vintages": True,
+            "release_lags": True,
+            "estimation_window": "expanding",
         },
         "series": {
             "DGS10": {"frequency": "daily"},
@@ -97,4 +106,72 @@ def write_test_config(base_dir: Path) -> Path:
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / "test.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+    write_series_registry(config_dir / "series_registry.yaml")
     return config_path
+
+
+def write_series_registry(path: Path) -> None:
+    registry = {
+        "DGS10": {
+            "source": "FRED",
+            "frequency": "daily",
+            "aggregation": "mean",
+            "transform": "level",
+            "realtime_eligible": True,
+            "release_lag_months": 0,
+            "release_lag_days": 0,
+        },
+        "DTB3": {
+            "source": "FRED",
+            "frequency": "daily",
+            "aggregation": "mean",
+            "transform": "level",
+            "realtime_eligible": True,
+            "release_lag_months": 0,
+            "release_lag_days": 0,
+        },
+        "UNRATE": {
+            "source": "FRED",
+            "vintage_source": "ALFRED",
+            "frequency": "monthly",
+            "aggregation": "last",
+            "transform": "level",
+            "realtime_eligible": True,
+            "release_lag_months": 1,
+            "release_lag_days": 5,
+        },
+        "BAMLH0A0HYM2": {
+            "source": "FRED",
+            "frequency": "daily",
+            "aggregation": "mean",
+            "transform": "level",
+            "realtime_eligible": True,
+            "release_lag_months": 0,
+            "release_lag_days": 0,
+        },
+    }
+    path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+
+
+def write_unrate_vintages(vintage_dir: Path) -> None:
+    vintage_dir.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame(
+        {
+            "observation_date": [
+                "1999-11-01",
+                "1999-12-01",
+                "2000-01-01",
+                "2000-01-01",
+                "2000-02-01",
+            ],
+            "vintage_date": [
+                "1999-12-06",
+                "2000-01-06",
+                "2000-02-06",
+                "2000-04-06",
+                "2000-03-07",
+            ],
+            "value": [4.1, 4.2, 4.3, 4.9, 4.4],
+        }
+    )
+    frame.to_csv(vintage_dir / "UNRATE.csv", index=False)

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from recession_risk.data.realtime_panel import build_realtime_monthly_panel
 from recession_risk.features.labels import build_recession_start_series, build_within_h_label
 from recession_risk.features.transforms import (
     aggregate_to_monthly,
@@ -15,7 +16,15 @@ from recession_risk.features.transforms import (
 from recession_risk.ingest.nber import build_monthly_recession_series, load_chronology
 
 
-def build_monthly_panel(config: dict, aggregation: str | None = None) -> pd.DataFrame:
+def build_monthly_panel(
+    config: dict,
+    aggregation: str | None = None,
+    data_mode: str | None = None,
+) -> pd.DataFrame:
+    selected_mode = data_mode or config.get("data_mode", "latest_available")
+    if selected_mode == "realtime":
+        return build_realtime_monthly_panel(config, aggregation=aggregation)
+
     aggregation_method = aggregation or config["aggregation"]["default"]
     raw_dir = config["paths"]["raw_data"]
     reference_dir = config["paths"]["reference_data"]
@@ -42,18 +51,23 @@ def build_monthly_panel(config: dict, aggregation: str | None = None) -> pd.Data
     return panel.reset_index()
 
 
-def save_monthly_panel(panel: pd.DataFrame, config: dict) -> tuple[Path, Path]:
+def save_monthly_panel(panel: pd.DataFrame, config: dict, data_mode: str | None = None) -> tuple[Path, Path]:
     processed_dir = config["paths"]["processed_data"]
     processed_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = processed_dir / "monthly_panel.csv"
-    parquet_path = processed_dir / "monthly_panel.parquet"
+    suffix = "" if (data_mode or config.get("data_mode", "latest_available")) == "latest_available" else "_realtime"
+    csv_path = processed_dir / f"monthly_panel{suffix}.csv"
+    parquet_path = processed_dir / f"monthly_panel{suffix}.parquet"
     panel.to_csv(csv_path, index=False)
     panel.to_parquet(parquet_path, index=False)
     return csv_path, parquet_path
 
 
-def load_monthly_panel(config: dict) -> pd.DataFrame:
-    csv_path = config["paths"]["processed_data"] / "monthly_panel.csv"
+def load_monthly_panel(config: dict, data_mode: str | None = None) -> pd.DataFrame:
+    suffix = "" if (data_mode or config.get("data_mode", "latest_available")) == "latest_available" else "_realtime"
+    csv_path = config["paths"]["processed_data"] / f"monthly_panel{suffix}.csv"
     if not csv_path.exists():
         raise FileNotFoundError(f"Processed panel not found: {csv_path}")
-    return pd.read_csv(csv_path, parse_dates=["date"])
+    frame = pd.read_csv(csv_path)
+    for date_column in [column for column in ["date", "forecast_date"] if column in frame.columns]:
+        frame[date_column] = pd.to_datetime(frame[date_column])
+    return frame

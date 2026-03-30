@@ -1,8 +1,18 @@
 paths:
   raw_data: data/raw
+  vintage_data: data/vintages
   processed_data: data/processed
   reference_data: data/reference
   reports: reports
+  outputs: outputs
+
+data_mode: latest_available
+series_registry_path: config/series_registry.yaml
+
+realtime:
+  use_vintages: true
+  release_lags: true
+  estimation_window: expanding
 
 series:
   DGS10:

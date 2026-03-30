@@ -1,0 +1,5 @@
+model_name,target_name,horizon,split_name,test_start,auc,precision,recall,f1,false_positive_months,brier_score,ece,event_hit_rate,median_timing_months,event_hits,n_events
+yield_curve_logit_realtime,within_12m,12,realtime_expanding,1990-01-01,0.8661484191272537,0.37777777777777777,0.3953488372093023,0.38636363636363635,28,0.10823883194674769,0.07809377626460151,0.75,9.0,3,4
+yield_curve_inversion_realtime,within_12m,12,realtime_expanding,1990-01-01,0.8677815521296054,0.32558139534883723,0.32558139534883723,0.32558139534883723,29,,,0.75,8.0,3,4
+hy_credit_logit_realtime,current_recession,0,realtime_expanding,2007-01-01,0.9149289099526067,0.8,0.4,0.5333333333333333,2,0.04553852380161083,0.023374035015380164,0.5,10.0,1,2
+sahm_rule_realtime,current_recession,0,realtime_expanding,1990-01-01,0.8273113338902812,0.24096385542168675,0.5555555555555556,0.3361344537815126,63,,,0.75,5.0,3,4

@@ -1,0 +1,36 @@
+DGS10:
+  source: FRED
+  frequency: daily
+  aggregation: mean
+  transform: level
+  realtime_eligible: true
+  release_lag_months: 0
+  release_lag_days: 0
+
+DTB3:
+  source: FRED
+  frequency: daily
+  aggregation: mean
+  transform: level
+  realtime_eligible: true
+  release_lag_months: 0
+  release_lag_days: 0
+
+UNRATE:
+  source: FRED
+  vintage_source: ALFRED
+  frequency: monthly
+  aggregation: last
+  transform: level
+  realtime_eligible: true
+  release_lag_months: 1
+  release_lag_days: 5
+
+BAMLH0A0HYM2:
+  source: FRED
+  frequency: daily
+  aggregation: mean
+  transform: level
+  realtime_eligible: true
+  release_lag_months: 0
+  release_lag_days: 0
