@@ -120,6 +120,17 @@ def write_test_config(base_dir: Path) -> Path:
             "thresholds": [0.15, 0.25, 0.35, 0.5],
             "event_windows_months": [3, 6, 12],
         },
+        "reporting": {
+            "include_current_snapshot": True,
+            "include_event_scorecards": True,
+            "include_portfolio_interpretation": True,
+            "regime_buckets": [
+                {"label": "low risk", "max_probability": 0.15},
+                {"label": "rising risk", "max_probability": 0.35},
+                {"label": "elevated risk", "max_probability": 0.60},
+                {"label": "high / imminent risk", "max_probability": 1.00},
+            ],
+        },
     }
     config_dir = base_dir / "config"
     config_dir.mkdir(parents=True, exist_ok=True)

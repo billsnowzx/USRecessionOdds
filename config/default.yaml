@@ -92,3 +92,17 @@ evaluation:
     - 3
     - 6
     - 12
+
+reporting:
+  include_current_snapshot: true
+  include_event_scorecards: true
+  include_portfolio_interpretation: true
+  regime_buckets:
+    - label: low risk
+      max_probability: 0.15
+    - label: rising risk
+      max_probability: 0.35
+    - label: elevated risk
+      max_probability: 0.60
+    - label: high / imminent risk
+      max_probability: 1.00

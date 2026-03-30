@@ -14,6 +14,21 @@ from recession_risk.backtest.plots import (
     plot_series_with_recessions,
 )
 from recession_risk.ingest.nber import extract_recession_periods
+from recession_risk.reporting.snapshot import (
+    build_portfolio_interpretation,
+    build_signal_driver_summary,
+    build_snapshot_tables,
+    ensure_output_report_dirs,
+    load_episode_summary,
+    load_reporting_inputs,
+    model_color,
+    model_disagreement_text,
+    model_title,
+    render_reporting_charts,
+    snapshot_overall_regime,
+    write_reporting_tables,
+    write_supporting_markdown,
+)
 
 
 MODEL_SPECS = {
@@ -52,11 +67,26 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
     reports_dir = config["paths"]["reports"]
     figures_dir = reports_dir / "figures"
     tables_dir = reports_dir / "tables"
+    output_dirs = ensure_output_report_dirs(config)
     reports_dir.mkdir(parents=True, exist_ok=True)
     figures_dir.mkdir(parents=True, exist_ok=True)
     tables_dir.mkdir(parents=True, exist_ok=True)
 
     recession_periods = extract_recession_periods(panel.set_index("date")["current_recession"].astype(int))
+    all_predictions, all_metrics = load_reporting_inputs(config, predictions, metrics)
+    snapshot, comparison = build_snapshot_tables(all_predictions, all_metrics, config)
+    episode_summary = load_episode_summary(config)
+    chart_paths = render_reporting_charts(
+        snapshot,
+        comparison,
+        all_predictions,
+        episode_summary,
+        recession_periods,
+        output_dirs,
+    )
+    write_reporting_tables(snapshot, comparison, output_dirs)
+    write_supporting_markdown(snapshot, comparison, output_dirs)
+
     plot_series_with_recessions(
         panel.set_index("date")["term_spread"].dropna(),
         recession_periods,
@@ -81,17 +111,37 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
 
     report = "\n".join(
         [
-            "# Recession Risk Replication Report",
+            "# Recession Risk Monitoring Report",
             "",
-            "## Summary",
+            "## Current Snapshot",
             "",
-            "This report reproduces the four baseline measurements defined in the repository configuration.",
+            snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_markdown(index=False) if not snapshot.empty else "No snapshot data available.",
             "",
-            "## Metrics",
+            f"Overall regime: {snapshot_overall_regime(snapshot)}",
+            "",
+            "## Signal Drivers",
+            "",
+            build_signal_driver_summary(panel, snapshot, comparison),
+            "",
+            "## Current Model Comparison",
+            "",
+            comparison.round(4).to_markdown(index=False) if not comparison.empty else "No model comparison data available.",
+            "",
+            "## Historical Comparison",
+            "",
+            f"![Selected probabilities](../outputs/reports/charts/{chart_paths['selected_probabilities'].name})",
+            "",
+            f"![Historical percentiles](../outputs/reports/charts/{chart_paths['historical_percentiles'].name})",
+            "",
+            f"![Current model comparison](../outputs/reports/charts/{chart_paths['current_model_comparison'].name})",
+            "",
+            f"![Episode warning timing](../outputs/reports/charts/{chart_paths['episode_warning_timing'].name})",
+            "",
+            "## Baseline Metrics",
             "",
             metrics.round(4).to_markdown(index=False),
             "",
-            "## Figures",
+            "## Baseline Figures",
             "",
             "![Term spread](figures/term_spread.png)",
             "",
@@ -101,9 +151,14 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
             "",
             "![Yield curve calibration](figures/yield_curve_calibration.png)",
             "",
+            "## Portfolio Interpretation",
+            "",
+            build_portfolio_interpretation(snapshot, config) if config.get("reporting", {}).get("include_portfolio_interpretation", True) else "Portfolio interpretation disabled in config.",
+            "",
             "## Notes",
             "",
             "- Daily financial series are aggregated to monthly frequency before modeling.",
+            "- The current snapshot prefers probability-scored models when multiple models exist for a target.",
             "- Yield-curve models are evaluated on expansion months for forward recession labels.",
             "- HY credit and Sahm rule are evaluated as recession-state detectors.",
         ]
@@ -116,10 +171,22 @@ def render_report(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.Da
 def render_html_summary(panel: pd.DataFrame, predictions: pd.DataFrame, metrics: pd.DataFrame, config: dict) -> Path:
     reports_dir = config["paths"]["reports"]
     assets_dir = reports_dir / "html_assets"
+    output_dirs = ensure_output_report_dirs(config)
     reports_dir.mkdir(parents=True, exist_ok=True)
     assets_dir.mkdir(parents=True, exist_ok=True)
 
     recession_periods = extract_recession_periods(panel.set_index("date")["current_recession"].astype(int))
+    all_predictions, all_metrics = load_reporting_inputs(config, predictions, metrics)
+    snapshot, comparison = build_snapshot_tables(all_predictions, all_metrics, config)
+    episode_summary = load_episode_summary(config)
+    phase5_charts = render_reporting_charts(
+        snapshot,
+        comparison,
+        all_predictions,
+        episode_summary,
+        recession_periods,
+        output_dirs,
+    )
     chart_paths: list[tuple[str, str]] = []
 
     combined_path = plot_combined_summary_chart(predictions, recession_periods, assets_dir / "combined_timeseries.png")
@@ -131,59 +198,68 @@ def render_html_summary(panel: pd.DataFrame, predictions: pd.DataFrame, metrics:
             continue
         output_path = assets_dir / f"{model_name}_timeseries.png"
         plot_model_summary_chart(frame, metrics, recession_periods, output_path)
-        chart_paths.append((MODEL_SPECS[model_name]["title"], output_path.name))
+        chart_paths.append((model_title(model_name), output_path.name))
 
-    summary_rows = []
-    for _, metric_row in metrics.iterrows():
-        model_name = metric_row["model_name"]
-        latest = predictions[predictions["model_name"] == model_name].sort_values("date").iloc[-1]
-        summary_rows.append(
-            {
-                "Model": MODEL_SPECS[model_name]["title"],
-                "Latest date": str(pd.Timestamp(latest["date"]).date()),
-                "Latest score": round(float(latest["score"]), 4),
-                "Latest signal": bool(latest["signal"]),
-                "AUC": round(float(metric_row["auc"]), 4) if pd.notna(metric_row["auc"]) else "",
-                "Precision": round(float(metric_row["precision"]), 4),
-                "Recall": round(float(metric_row["recall"]), 4),
-                "Event hit rate": round(float(metric_row["event_hit_rate"]), 4) if pd.notna(metric_row["event_hit_rate"]) else "",
-                "Median timing (months)": round(float(metric_row["median_timing_months"]), 2) if pd.notna(metric_row["median_timing_months"]) else "",
-            }
-        )
-    summary_table = pd.DataFrame(summary_rows).to_html(index=False, classes="summary-table")
+    summary_table = snapshot.drop(columns=["model_name"], errors="ignore").round(4).to_html(index=False, classes="summary-table")
+    comparison_table = comparison.round(4).to_html(index=False, classes="metrics-table") if not comparison.empty else "<p>No model comparison data available.</p>"
     metrics_table = metrics.round(4).to_html(index=False, classes="metrics-table")
 
     charts_html = "\n".join(
         f"<section class=\"chart-card\"><h2>{title}</h2><img src=\"html_assets/{filename}\" alt=\"{title}\"></section>"
         for title, filename in chart_paths
     )
+    phase5_html = "\n".join(
+        [
+            f"<section class=\"chart-card\"><h2>Selected Horizon History</h2><img src=\"../outputs/reports/charts/{phase5_charts['selected_probabilities'].name}\" alt=\"Selected horizon history\"></section>",
+            f"<section class=\"chart-card\"><h2>Historical Percentile Context</h2><img src=\"../outputs/reports/charts/{phase5_charts['historical_percentiles'].name}\" alt=\"Historical percentiles\"></section>",
+            f"<section class=\"chart-card\"><h2>Current Model Comparison</h2><img src=\"../outputs/reports/charts/{phase5_charts['current_model_comparison'].name}\" alt=\"Current model comparison\"></section>",
+            f"<section class=\"chart-card\"><h2>Episode Warning Timing</h2><img src=\"../outputs/reports/charts/{phase5_charts['episode_warning_timing'].name}\" alt=\"Episode timing\"></section>",
+        ]
+    )
 
     html = f"""<!DOCTYPE html>
 <html lang=\"en\">
 <head>
   <meta charset=\"utf-8\">
-  <title>Recession Risk Time-Series Summary</title>
+  <title>Recession Risk Monitoring Summary</title>
   <style>
-    body {{ font-family: Georgia, 'Times New Roman', serif; margin: 32px auto; max-width: 1200px; color: #1c1c1c; line-height: 1.5; background: #f7f4ef; }}
+    body {{ font-family: Georgia, 'Times New Roman', serif; margin: 24px auto 48px; max-width: 1260px; color: #1c1c1c; line-height: 1.5; background: linear-gradient(180deg, #f7f2e8 0%, #f0ece4 100%); }}
     h1, h2 {{ color: #1f2d3d; }}
-    .meta {{ margin-bottom: 24px; color: #4f5b66; }}
-    .summary-table, .metrics-table {{ border-collapse: collapse; width: 100%; margin: 16px 0 32px; background: white; }}
+    .hero {{ background: #17324d; color: #f8f3e8; padding: 24px 28px; border-radius: 16px; margin-bottom: 24px; }}
+    .hero p {{ margin: 8px 0 0; color: #ddd4c5; }}
+    .grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }}
+    .card {{ background: rgba(255,255,255,0.9); border: 1px solid #d8d2c8; padding: 18px; border-radius: 14px; box-shadow: 0 8px 22px rgba(39,52,67,0.06); }}
+    .summary-table, .metrics-table {{ border-collapse: collapse; width: 100%; margin: 16px 0 32px; background: rgba(255,255,255,0.92); }}
     .summary-table th, .summary-table td, .metrics-table th, .metrics-table td {{ border: 1px solid #d8d2c8; padding: 8px 10px; text-align: left; }}
     .summary-table th, .metrics-table th {{ background: #ebe4d8; }}
-    .chart-card {{ background: white; padding: 18px; margin: 0 0 24px; border: 1px solid #d8d2c8; box-shadow: 0 3px 10px rgba(0,0,0,0.04); }}
+    .chart-card {{ background: rgba(255,255,255,0.92); padding: 18px; margin: 0 0 24px; border: 1px solid #d8d2c8; border-radius: 14px; box-shadow: 0 8px 22px rgba(39,52,67,0.06); }}
     img {{ width: 100%; height: auto; display: block; }}
     .note {{ color: #5f6b76; margin-top: 24px; }}
+    @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} }}
   </style>
 </head>
 <body>
-  <h1>Recession Risk Time-Series Summary</h1>
-  <p class=\"meta\">Generated from the baseline backtest outputs in this repository. The combined chart normalizes heterogeneous model outputs onto a comparable 0-1 view: probabilistic models use raw probability, the inversion rule uses the binary alarm, and the Sahm rule uses threshold-normalized gap capped at 1.</p>
-  <h2>Snapshot Summary</h2>
+  <section class=\"hero\">
+    <h1>U.S. Recession Odds Monitor</h1>
+    <p>Selected models provide a rules-based snapshot for now, 3M, 6M, and 12M recession risk using the best saved model per target in this repository.</p>
+  </section>
+  <h2>Current Snapshot</h2>
   {summary_table}
+  <section class=\"grid\">
+    <section class=\"card\"><h2>Overall Regime</h2><p>{snapshot_overall_regime(snapshot)}</p></section>
+    <section class=\"card\"><h2>Signal Drivers</h2><p>{build_signal_driver_summary(panel, snapshot, comparison).replace(chr(10), '<br>')}</p></section>
+    <section class=\"card\"><h2>Model Disagreement</h2><p>{model_disagreement_text(comparison)}</p></section>
+    <section class=\"card\"><h2>Portfolio Interpretation</h2><p>{build_portfolio_interpretation(snapshot, config).replace(chr(10), '<br>')}</p></section>
+  </section>
+  <h2>Current Model Comparison</h2>
+  {comparison_table}
+  <h2>Investor-Facing Charts</h2>
+  {phase5_html}
   <h2>Baseline Metrics</h2>
   {metrics_table}
+  <h2>Baseline Time-Series Charts</h2>
   {charts_html}
-  <p class=\"note\">Recession periods are shaded in gray on all charts.</p>
+  <p class=\"note\">Recession periods are shaded in gray on time-series charts. Historical percentiles are relative to each selected model's own archive.</p>
 </body>
 </html>
 """

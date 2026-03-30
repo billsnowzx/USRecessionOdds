@@ -1,0 +1,5 @@
+Target,Selected model,As of,Probability,Historical percentile,Regime
+P(recession now),HY Credit Logit,2026-03-01,0.0025658614183918,0.10822510822510822,low risk
+P(recession within 3 months),Multivariate Logit Within 3M,2026-02-01,0.0742850685037098,0.10416666666666667,low risk
+P(recession within 6 months),Multivariate Logit Within 6M,2026-02-01,0.1310073125344697,0.25,low risk
+P(recession within 12 months),Yield Curve Logit,2026-03-01,0.1559650873970698,0.7268170426065163,rising risk

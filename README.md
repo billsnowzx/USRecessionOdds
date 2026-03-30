@@ -60,6 +60,10 @@ If you do not install the package, run with `PYTHONPATH=src` and `python -m rece
 - `reports/tables/robustness_metrics.csv`
 - `reports/figures/*.png`
 - `reports/recession_risk_report.md`
+- `outputs/reports/current_snapshot/*`
+- `outputs/reports/historical_comparison/*`
+- `outputs/reports/charts/*`
+- `outputs/reports/tables/*`
 - `data/vintages/*.csv`: cached ALFRED vintage downloads for realtime-eligible series
 - `data/processed/monthly_panel_realtime.csv` and `.parquet`
 - `outputs/backtests/realtime_predictions.csv`
@@ -97,3 +101,13 @@ Phase 3 adds automatic event-oriented evaluation outputs whenever baseline, real
 - per-episode scorecards with first warning date and lead/lag timing
 - per-model episode summaries
 - threshold sweeps for probability-scored models
+
+## Reporting
+
+Phase 5 adds investor-facing outputs while preserving the original report entrypoints:
+
+- current snapshot table for `now`, `3m`, `6m`, and `12m` recession odds
+- regime classification using configurable probability buckets
+- deterministic signal-driver and model-disagreement summaries
+- historical percentile and episode-warning comparison charts
+- scenario-oriented portfolio interpretation text
