@@ -1,0 +1,6 @@
+data_mode: realtime
+
+realtime:
+  use_vintages: true
+  release_lags: true
+  estimation_window: expanding

@@ -19,6 +19,8 @@
 
 - Multivariate logistic models are run separately for `current_recession`, `within_3m`, `within_6m`, and `within_12m`.
 - Regularized logistic models currently support elastic-net style shrinkage with configurable `alpha` and `l1_ratio`.
+- A simple-average ensemble can combine configured benchmark and expanded members by target.
+- Tree-based models are wired as an optional `scikit-learn` path and remain disabled by default.
 - Forecast horizons are intentionally modeled separately rather than as one pooled target.
 
 ## Selection logic in reports

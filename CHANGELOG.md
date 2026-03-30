@@ -2,10 +2,16 @@
 
 ## Unreleased
 
+- No unreleased entries.
+
+## 0.2.0
+
 - Added GitHub Actions CI for lint, type-checking, and tests.
 - Added `ruff` and `mypy` project configuration plus dev extras in `pyproject.toml`.
 - Added example notebook scaffolding under `examples/`.
 - Added modeling notes for the benchmark and expanded model stack.
+- Added simple-average ensemble support for expanded models.
+- Added optional tree-model scaffolding and a dedicated `config/realtime.yaml`.
 
 ## 0.1.0
 

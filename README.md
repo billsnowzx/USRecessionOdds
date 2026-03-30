@@ -48,6 +48,7 @@ recession-risk run-expanded-models --data-mode realtime
 ```
 
 If you do not install the package, run with `PYTHONPATH=src` and `python -m recession_risk.cli ...`.
+Use `config/realtime.yaml` when you want a small explicit realtime override file.
 
 ## Development
 
@@ -107,6 +108,8 @@ Phase 2 adds config-driven benchmark-adjacent models:
 
 - multivariate logistic regression
 - regularized logistic regression
+- simple-average ensemble across configured model members
+- optional tree-model scaffolding via `scikit-learn` when enabled
 
 They are run through `run-expanded-models` and produce separate archived outputs for latest-available and realtime panel modes.
 

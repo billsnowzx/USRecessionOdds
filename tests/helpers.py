@@ -99,6 +99,19 @@ def write_test_config(base_dir: Path) -> Path:
                 "alpha": 0.1,
                 "l1_ratio": 0.5,
             },
+            "tree_models": {
+                "enabled": False,
+                "targets": ["within_3m", "within_6m", "within_12m", "current_recession"],
+                "features": ["term_spread", "DTB3", "BAMLH0A0HYM2", "sahm_gap", "UNRATE"],
+                "n_estimators": 50,
+                "learning_rate": 0.05,
+                "max_depth": 2,
+                "random_state": 42,
+            },
+            "ensemble": {
+                "enabled": True,
+                "members": ["yield_curve_logit", "hy_credit_logit", "multivariate_logit", "regularized_logit"],
+            },
         },
         "series": {
             "DGS10": {"frequency": "daily"},

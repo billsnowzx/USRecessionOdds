@@ -39,9 +39,12 @@ def test_expanded_models_run_and_emit_summaries():
                 "regularized_logit_within_12m",
                 "multivariate_logit_current_recession",
                 "regularized_logit_current_recession",
+                "ensemble_within_12m",
+                "ensemble_current_recession",
             }
         )
-        assert {"feature", "coefficient", "model_name", "target_name"}.issubset(summaries.columns)
+        assert {"model_name", "target_name"}.issubset(summaries.columns)
+        assert any(column in summaries.columns for column in ["coefficient", "weight", "importance"])
 
     finally:
         shutil.rmtree(base_dir, ignore_errors=True)

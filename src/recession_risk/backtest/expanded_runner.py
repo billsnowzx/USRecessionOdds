@@ -7,8 +7,10 @@ import pandas as pd
 from recession_risk.backtest.event_metrics import write_evaluation_outputs
 from recession_risk.backtest.metrics import summarize_predictions
 from recession_risk.ingest.nber import extract_recession_periods
+from recession_risk.models.ensemble import SimpleAverageEnsemble
 from recession_risk.models.logit_multivariate import MultivariateLogitModel
 from recession_risk.models.regularized_logit import RegularizedLogitModel
+from recession_risk.models.tree_models import GradientBoostingRecessionModel
 
 
 def run_expanded_models(panel: pd.DataFrame, config: dict, data_mode: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -45,6 +47,40 @@ def run_expanded_models(panel: pd.DataFrame, config: dict, data_mode: str) -> tu
             summary["data_mode"] = data_mode
             summary_frames.append(summary)
 
+    tree_cfg = config.get("models", {}).get("tree_models", {})
+    if tree_cfg.get("enabled", False):
+        for target_name in tree_cfg.get("targets", []):
+            run_predictions, summary = run_expanding_model(
+                panel=panel,
+                target_name=target_name,
+                feature_names=tree_cfg.get("features", []),
+                model_name=f"tree_boosting_{target_name}",
+                model_factory=lambda features: GradientBoostingRecessionModel(
+                    features,
+                    n_estimators=int(tree_cfg.get("n_estimators", 100)),
+                    learning_rate=float(tree_cfg.get("learning_rate", 0.05)),
+                    max_depth=int(tree_cfg.get("max_depth", 2)),
+                    random_state=int(tree_cfg.get("random_state", 42)),
+                ),
+                train_end=target_train_end(config, target_name),
+                test_start=target_test_start(config, target_name),
+            )
+            if run_predictions.empty:
+                continue
+            predictions_frames.append(run_predictions)
+            metrics_rows.append(
+                summarize_predictions(
+                    run_predictions,
+                    recession_periods,
+                    event_mode=event_mode_for_target(target_name),
+                    probability_model=True,
+                )
+            )
+            summary["model_name"] = f"tree_boosting_{target_name}"
+            summary["target_name"] = target_name
+            summary["data_mode"] = data_mode
+            summary_frames.append(summary)
+
     regularized_cfg = config.get("models", {}).get("regularized_logit", {})
     if regularized_cfg.get("enabled", False):
         for target_name in regularized_cfg.get("targets", []):
@@ -77,6 +113,28 @@ def run_expanded_models(panel: pd.DataFrame, config: dict, data_mode: str) -> tu
             summary["target_name"] = target_name
             summary["data_mode"] = data_mode
             summary_frames.append(summary)
+
+    ensemble_cfg = config.get("models", {}).get("ensemble", {})
+    if ensemble_cfg.get("enabled", False) and predictions_frames:
+        ensemble_predictions, ensemble_summaries = run_ensemble_models(
+            predictions_frames,
+            config,
+            members=ensemble_cfg.get("members", []),
+        )
+        if not ensemble_predictions.empty:
+            predictions_frames.append(ensemble_predictions)
+            for target_name, frame in ensemble_predictions.groupby("target_name", dropna=False):
+                metrics_rows.append(
+                    summarize_predictions(
+                        frame,
+                        recession_periods,
+                        event_mode=event_mode_for_target(str(target_name)),
+                        probability_model=True,
+                    )
+                )
+            if not ensemble_summaries.empty:
+                ensemble_summaries["data_mode"] = data_mode
+                summary_frames.append(ensemble_summaries)
 
     predictions = pd.concat(predictions_frames, ignore_index=True) if predictions_frames else pd.DataFrame()
     metrics = pd.DataFrame(metrics_rows)
@@ -192,3 +250,64 @@ def fallback_holdout_split(data: pd.DataFrame, target_name: str) -> tuple[pd.Dat
             if train[target_name].nunique() >= 2 and not test.empty:
                 break
     return train, test
+
+
+def run_ensemble_models(
+    prediction_frames: list[pd.DataFrame],
+    config: dict,
+    members: list[str],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    combined = pd.concat(prediction_frames, ignore_index=True)
+    threshold = float(config["thresholds"]["probability"])
+    ensemble_predictions: list[pd.DataFrame] = []
+    summary_frames: list[pd.DataFrame] = []
+
+    for target_name in sorted(combined["target_name"].dropna().unique()):
+        member_frames = resolve_ensemble_members(combined, str(target_name), members)
+        if len(member_frames) < 2:
+            continue
+        ensemble = SimpleAverageEnsemble([frame["model_name"].iloc[0] for frame in member_frames], threshold=threshold).fit(
+            member_frames
+        )
+        merged = ensemble.predict_proba(member_frames)
+        if merged.empty:
+            continue
+        merged["model_name"] = f"ensemble_{target_name}"
+        merged["feature_value"] = ""
+        merged["features"] = ",".join(ensemble.member_names)
+        ensemble_predictions.append(merged)
+
+        summary = ensemble.get_model_summary()
+        summary["model_name"] = f"ensemble_{target_name}"
+        summary["target_name"] = target_name
+        summary_frames.append(summary)
+
+    predictions = pd.concat(ensemble_predictions, ignore_index=True) if ensemble_predictions else pd.DataFrame()
+    summaries = pd.concat(summary_frames, ignore_index=True) if summary_frames else pd.DataFrame()
+    return predictions, summaries
+
+
+def resolve_ensemble_members(combined: pd.DataFrame, target_name: str, members: list[str]) -> list[pd.DataFrame]:
+    frames: list[pd.DataFrame] = []
+    for member in members:
+        resolved_name = ensemble_member_model_name(member, target_name)
+        if resolved_name is None:
+            continue
+        frame = combined[combined["model_name"] == resolved_name].sort_values("date").copy()
+        if not frame.empty:
+            frames.append(frame)
+    return frames
+
+
+def ensemble_member_model_name(member: str, target_name: str) -> str | None:
+    if member in {"multivariate_logit", "regularized_logit", "tree_boosting"}:
+        return f"{member}_{target_name}"
+    if member == "yield_curve_logit" and target_name == "within_12m":
+        return member
+    if member == "yield_curve_inversion" and target_name == "within_12m":
+        return member
+    if member == "hy_credit_logit" and target_name == "current_recession":
+        return member
+    if member == "sahm_rule" and target_name == "current_recession":
+        return member
+    return None
